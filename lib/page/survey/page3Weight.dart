@@ -149,12 +149,12 @@ class _SurveyPage3WeightState extends State<SurveyPage3Weight> {
                   visible: unitType == 'kg',
                   child: WheelSlider(
                     interval: 0.5,
-                    totalCount: 1500,
-                    initValue: currentWeight * 5,
+                    totalCount: 1700,
+                    initValue: double.parse(((currentWeight - 30) * 5).toStringAsFixed(1)),
                     isInfinite: false,
                     enableAnimation: false,
                     onValueChanged: (val) {
-                      widget.onChangeWeight(val * 0.2);
+                      widget.onChangeWeight((30 + val * 0.2).toDouble());
                     },
                     hapticFeedbackType: HapticFeedbackType.selectionClick,
                   ),
@@ -163,12 +163,12 @@ class _SurveyPage3WeightState extends State<SurveyPage3Weight> {
                   visible: unitType == 'lbs',
                   child: WheelSlider(
                     interval: 0.5,
-                    totalCount: 3300,
-                    initValue: currentWeight * 5,
+                    totalCount: 3740,
+                    initValue: double.parse(((currentWeight - 66) * 5).toStringAsFixed(1)),
                     isInfinite: false,
                     enableAnimation: false,
                     onValueChanged: (val) {
-                      widget.onChangeWeight(val * 0.2);
+                      widget.onChangeWeight((66 + val * 0.2).toDouble());
                     },
                     hapticFeedbackType: HapticFeedbackType.selectionClick,
                   ),

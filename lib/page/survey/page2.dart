@@ -13,7 +13,7 @@ class SurveyPage2 extends StatefulWidget {
 
 class _SurveyPage2State extends State<SurveyPage2> {
     late int initAge=widget.age;
-    late var ageWheel= WheelPickerController(itemCount: 100,initialIndex: initAge-15);
+    late var ageWheel= WheelPickerController(itemCount: 85,initialIndex: initAge-15);
     static const textStyle = TextStyle(fontSize: 18, height: 2,fontWeight: FontWeight.w600);
 
 // late int initAge;

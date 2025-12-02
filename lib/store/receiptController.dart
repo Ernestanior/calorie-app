@@ -13,21 +13,16 @@ class RecipeController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    print('RecipeController initialized');
     isInitialized.value = true;
   }
 
   @override
   void onClose() {
-    print('RecipeController closed');
     super.onClose();
   }
 
   /// 获取食谱数据
   void fetchRecipes() async {
-    print(
-        'RecipeController fetchRecipes called, isLoading: ${isLoading.value}');
-
     // 防止重复请求
     if (isLoading.value) return;
 

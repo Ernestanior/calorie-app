@@ -8,6 +8,7 @@ import 'package:calorie/components/dialog/nutrition.dart';
 // import 'package:calorie/components/buttonX/index.dart';
 import 'package:calorie/network/api.dart';
 import 'package:calorie/store/store.dart';
+import 'package:calorie/components/dialog/delete.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get/get_utils/src/extensions/internacionalization.dart';
@@ -23,29 +24,79 @@ class FoodDetail extends StatefulWidget {
 
 class _FoodDetailState extends State<FoodDetail> {
   // final PanelController _panelController = PanelController();
-  int _selectedMeal = Controller.c.foodDetail['mealType'];
-  String _dishName =
-      Controller.c.foodDetail['detectionResultData']['total']['dishName'];
+  int _selectedMeal = 1; // 默认值
+  String _dishName = 'UNKNOWN_FOOD'.tr; // 默认值
 
   double? _imageHeight;
   double? _imageWidth;
+  String? _imageUrl; // 存储图片URL，可能为null
+
+  // 安全地获取数据
+  void _initializeData() {
+    try {
+      final foodDetail = Controller.c.foodDetail;
+      
+      // 安全地获取 mealType
+      final mealType = foodDetail['mealType'];
+      _selectedMeal = (mealType is int) ? mealType : (mealType != null ? int.tryParse(mealType.toString()) ?? 1 : 1);
+      
+      // 安全地获取 dishName
+      final detectionResultData = foodDetail['detectionResultData'];
+      if (detectionResultData != null && detectionResultData is Map) {
+        final total = detectionResultData['total'];
+        if (total != null && total is Map) {
+          final dishNameRaw = total['dishName'];
+          if (dishNameRaw != null && dishNameRaw.toString().isNotEmpty) {
+            _dishName = dishNameRaw.toString();
+          }
+        }
+      }
+      
+      // 安全地获取图片URL
+      final sourceImg = foodDetail['sourceImg'];
+      if (sourceImg != null && sourceImg.toString().isNotEmpty) {
+        _imageUrl = sourceImg.toString();
+        _loadImageSize();
+      }
+    } catch (e) {
+      print('Error initializing food detail data: $e');
+      // 使用默认值继续
+    }
+  }
 
   void _loadImageSize() {
-    final img = Image.network(Controller.c.foodDetail['sourceImg']).image;
-    img.resolve(const ImageConfiguration()).addListener(
-      ImageStreamListener((ImageInfo info, bool _) {
-        setState(() {
-          _imageWidth = info.image.width.toDouble();
-          _imageHeight = info.image.height.toDouble();
-        });
-      }),
-    );
+    if (_imageUrl == null || _imageUrl!.isEmpty) return;
+    
+    try {
+      final img = Image.network(_imageUrl!).image;
+      img.resolve(const ImageConfiguration()).addListener(
+        ImageStreamListener((ImageInfo info, bool _) {
+          if (mounted) {
+            setState(() {
+              _imageWidth = info.image.width.toDouble();
+              _imageHeight = info.image.height.toDouble();
+            });
+          }
+        }, onError: (exception, stackTrace) {
+          print('Error loading image size: $exception');
+          // 图片加载失败时使用默认尺寸
+          if (mounted) {
+            setState(() {
+              _imageWidth = null;
+              _imageHeight = null;
+            });
+          }
+        }),
+      );
+    } catch (e) {
+      print('Error creating image: $e');
+    }
   }
 
   @override
   void initState() {
     super.initState();
-    _loadImageSize();
+    _initializeData();
     // 页面绘制完成后调用打开面板
     // WidgetsBinding.instance.addPostFrameCallback((_) {
     //   _panelController.open(); // 展开到最大高度
@@ -155,7 +206,8 @@ class _FoodDetailState extends State<FoodDetail> {
                 const SizedBox(
                   height: 5,
                 ),
-                Text(formatDate(Controller.c.foodDetail['createDate']),
+                Text(
+                    _safeGetDate(Controller.c.foodDetail['createDate']),
                     style: const TextStyle(fontSize: 11, color: Colors.grey)),
 
                 const SizedBox(height: 20),
@@ -163,9 +215,7 @@ class _FoodDetailState extends State<FoodDetail> {
                 const SizedBox(height: 30),
                 _buildIngredients(),
                 const SizedBox(height: 30),
-                _buildNutrition(Controller.c.foodDetail['detectionResultData']
-                        ['total']['micronutrients'] ??
-                    {}),
+                _buildNutrition(_safeGetMicronutrients()),
                 const SizedBox(height: 15),
                 // buildCompleteButton(context,'SAVE'.tr,()async {
                 //   final res = await detectionModify(Controller.c.foodDetail['id'],{'dishName':_dishName,'mealType':_selectedMeal});
@@ -183,41 +233,107 @@ class _FoodDetailState extends State<FoodDetail> {
           decoration: const BoxDecoration(color: Colors.white),
           child: Stack(
             children: [
-              Image.network(
-                Controller.c.foodDetail['sourceImg'],
-                width: double.infinity,
-                height: displayHeight,
-                fit: BoxFit.cover,
-                alignment: Alignment.topCenter,
-              ),
+              // 安全地显示图片，如果URL无效或加载失败则显示默认背景
+              _imageUrl != null && _imageUrl!.isNotEmpty
+                  ? Image.network(
+                      _imageUrl!,
+                      width: double.infinity,
+                      height: displayHeight,
+                      fit: BoxFit.cover,
+                      alignment: Alignment.topCenter,
+                      errorBuilder: (context, error, stackTrace) {
+                        // 图片加载失败时显示默认背景
+                        return Container(
+                          width: double.infinity,
+                          height: displayHeight,
+                          color: Colors.grey[200],
+                          child: const Icon(
+                            Icons.restaurant_menu,
+                            size: 80,
+                            color: Colors.grey,
+                          ),
+                        );
+                      },
+                      loadingBuilder: (context, child, loadingProgress) {
+                        if (loadingProgress == null) return child;
+                        return Container(
+                          width: double.infinity,
+                          height: displayHeight,
+                          color: Colors.grey[200],
+                          child: const Center(
+                            child: CircularProgressIndicator(),
+                          ),
+                        );
+                      },
+                    )
+                  : Container(
+                      width: double.infinity,
+                      height: displayHeight,
+                      color: Colors.grey[200],
+                      child: const Icon(
+                        Icons.restaurant_menu,
+                        size: 80,
+                        color: Colors.grey,
+                      ),
+                    ),
               Positioned(
                 top: 68,
                 left: 20,
                 child: GestureDetector(
                     onTap: () => Navigator.pop(context),
-                    child: const CircleAvatar(
-                      backgroundColor: Color.fromARGB(150, 241, 241, 241),
+                    child:  Container(
+                      padding: const EdgeInsets.all(5),
+                      decoration: BoxDecoration(
+                      color: Color.fromARGB(148, 82, 82, 82),
+                      borderRadius: BorderRadius.circular(50),
+                      ),
                       child: Icon(
-                        AliIcon.back2,
+                        AliIcon.left,
                         color: Colors.white,
-                        size: 30,
+                        size: 23,
                       ),
                     )),
               ),
               Positioned(
                 top: 68,
                 right: 20,
-                child: GestureDetector(
-                    onTap: () => Get.bottomSheet(ShareFoodSheet(),
-                        isScrollControlled: true),
-                    child: const CircleAvatar(
-                      backgroundColor: Color.fromARGB(150, 241, 241, 241),
-                      child: Icon(
-                        AliIcon.share,
-                        color: Colors.white,
-                        size: 27,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    GestureDetector(
+                      onTap: () => Get.bottomSheet(ShareFoodSheet(),
+                          isScrollControlled: true),
+                      child: Container(
+                        padding: const EdgeInsets.all(5),
+                        decoration: BoxDecoration(
+                          color: Color.fromARGB(147, 63, 63, 63),
+                          borderRadius: BorderRadius.circular(50),
+                        ),
+                        child: Icon(
+                          AliIcon.share,
+                          color: Colors.white,
+                          size: 23,
+                        ),
                       ),
-                    )),
+                    ),
+                    const SizedBox(width: 12),
+                    GestureDetector(
+                      onTap: () => _showDeleteConfirmDialog(context),
+                      child: Container(
+                        padding: const EdgeInsets.all(5),
+                        decoration: BoxDecoration(
+                          color: Color.fromARGB(147, 63, 63, 63),
+                          borderRadius: BorderRadius.circular(50),
+                        ),
+                        child: Icon(
+                          Icons.delete_outline,
+                          color: Colors.white,
+                          size: 23,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
               // SlidingUpPanel(
               //   controller: _panelController, // 加上 controller
@@ -244,43 +360,39 @@ class _FoodDetailState extends State<FoodDetail> {
   }
 
   Widget _buildNutritionStats() {
+    // 安全地获取营养数据
+    final total = _safeGetTotal();
+    
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Row(
-        //   children: [
-        //     const Icon(Icons.local_fire_department, color: Colors.red),
-        //     const SizedBox(width: 6),
-        //     Text(
-        //         "${Controller.c.foodDetail['detectionResultData']['total']['calories']} ${'KCAL'.tr}",
-        //         style:
-        //             const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-        //   ],
-        // ),
-        // const SizedBox(height: 10),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             _stat(
+                context,
                 "CALORIE".tr,
-                Controller.c.foodDetail['detectionResultData']['total']
-                    ['calories'],
+                _safeGetNum(total['calories']) ?? 0,
                 Icons.local_fire_department,
                 const Color.fromARGB(255, 255, 91, 21),
-                'KCAL'.tr),
+                'KCAL'.tr,
+                'calorie'),
             _stat(
+                context,
                 "CARBS".tr,
-                Controller.c.foodDetail['detectionResultData']['total']
-                    ['carbs'],
+                _safeGetNum(total['carbs']) ?? 0,
                 AliIcon.dinner4,
                 Colors.blueAccent,
-                'G'.tr),
+                'G_UNIT'.tr,
+                'carbs'),
             _stat(
+                context,
                 "FATS".tr,
-                Controller.c.foodDetail['detectionResultData']['total']['fat'],
+                _safeGetNum(total['fat']) ?? 0,
                 AliIcon.meat2,
                 Colors.redAccent,
-                'G'.tr),
+                'G_UNIT'.tr,
+                'fat'),
           ],
         ),
         const SizedBox(
@@ -290,26 +402,29 @@ class _FoodDetailState extends State<FoodDetail> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             _stat(
+                context,
                 "PROTEIN".tr,
-                Controller.c.foodDetail['detectionResultData']['total']
-                    ['protein'],
+                _safeGetNum(total['protein']) ?? 0,
                 AliIcon.fat,
                 Colors.orangeAccent,
-                'G'.tr),
+                'G_UNIT'.tr,
+                'protein'),
             _stat(
+                context,
                 "SUGAR".tr,
-                Controller.c.foodDetail['detectionResultData']['total']
-                    ['sugar'],
+                _safeGetNum(total['sugar']) ?? 0,
                 AliIcon.sugar2,
                 const Color.fromARGB(255, 64, 242, 255),
-                'G'.tr),
+                'G_UNIT'.tr,
+                'sugars'),
             _stat(
+                context,
                 "FIBER".tr,
-                Controller.c.foodDetail['detectionResultData']['total']
-                    ['fiber'],
+                _safeGetNum(total['fiber']) ?? 0,
                 AliIcon.fiber,
                 const Color.fromARGB(255, 64, 255, 83),
-                'G'.tr),
+                'G_UNIT'.tr,
+                'dietaryFiber'),
           ],
         ),
       ],
@@ -317,48 +432,66 @@ class _FoodDetailState extends State<FoodDetail> {
   }
 
   static Widget _stat(
-      String name, dynamic value, IconData icon, Color iconColor, String unit) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 20),
-      width: 110,
-      decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(10),
-          boxShadow: const [
-            BoxShadow(
-              color: Color.fromARGB(31, 89, 89, 89),
-              blurRadius: 10,
-              spreadRadius: 1,
+      BuildContext context,
+      String name, 
+      dynamic value, 
+      IconData icon, 
+      Color iconColor, 
+      String unit,
+      String? nutritionKey) {
+    return GestureDetector(
+      onTap: () {
+        if (nutritionKey != null) {
+          showNutritionInfoDialog(context, nutritionKey);
+        }
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 20),
+        width: 110,
+        decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(10),
+            boxShadow: const [
+              BoxShadow(
+                color: Color.fromARGB(31, 89, 89, 89),
+                blurRadius: 10,
+                spreadRadius: 1,
+              )
+            ]),
+        child: Column(
+          children: [
+            CircleAvatar(
+              backgroundColor: const Color.fromARGB(255, 250, 246, 246),
+              radius: 24,
+              child: Icon(icon, size: 24, color: iconColor),
+            ),
+            const SizedBox(height: 8),
+            Text(name, style: const TextStyle(fontSize: 12)),
+            const SizedBox(height: 2),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                    value != null ? value.toString() : '0',
+                    style: const TextStyle(fontWeight: FontWeight.bold)),
+                Text(' $unit',
+                    style: TextStyle(
+                        fontSize: 12, color: Color.fromARGB(255, 90, 90, 90))),
+              ],
             )
-          ]),
-      child: Column(
-        children: [
-          CircleAvatar(
-            backgroundColor: const Color.fromARGB(255, 250, 246, 246),
-            radius: 24,
-            child: Icon(icon, size: 24, color: iconColor),
-          ),
-          const SizedBox(height: 8),
-          Text(name, style: const TextStyle(fontSize: 12)),
-          const SizedBox(height: 2),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text('${value}',
-                  style: const TextStyle(fontWeight: FontWeight.bold)),
-              Text(' $unit',
-                  style: TextStyle(
-                      fontSize: 12, color: Color.fromARGB(255, 90, 90, 90))),
-            ],
-          )
-        ],
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildIngredients() {
-    List<dynamic> ingredients =
-        Controller.c.foodDetail['detectionResultData']['ingredients'];
+    // 安全地获取配料列表
+    final ingredients = _safeGetIngredients();
+
+    if (ingredients.isEmpty) {
+      return const SizedBox.shrink();
+    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -371,6 +504,13 @@ class _FoodDetailState extends State<FoodDetail> {
           spacing: 16,
           runSpacing: 12,
           children: ingredients.map((item) {
+            final name = item is Map 
+                ? (item['name']?.toString() ?? 'unknown')
+                : 'unknown';
+            final calories = item is Map 
+                ? (_safeGetNum(item['calories']) ?? 0)
+                : 0;
+            
             return Container(
                 padding:
                     const EdgeInsets.symmetric(vertical: 15, horizontal: 20),
@@ -386,12 +526,12 @@ class _FoodDetailState extends State<FoodDetail> {
                     ]),
                 child: Column(
                   children: [
-                    Text("${item['name'].isEmpty ? 'unknow' : item['name']}"),
+                    Text(name.isEmpty ? 'unknown' : name),
                     const SizedBox(
                       height: 5,
                     ),
                     Text(
-                      "${item['calories']}",
+                      "$calories",
                       style: const TextStyle(fontSize: 12),
                     ),
                   ],
@@ -497,8 +637,14 @@ class _FoodDetailState extends State<FoodDetail> {
                         _selectedMeal = meal['value'];
                       });
                       Navigator.pop(context);
-                      await detectionModify(Controller.c.foodDetail['id'],
-                          {'mealType': _selectedMeal});
+                      final id = Controller.c.foodDetail['id'];
+                      if (id != null) {
+                        try {
+                          await detectionModify(id, {'mealType': _selectedMeal});
+                        } catch (e) {
+                          print('Error modifying meal type: $e');
+                        }
+                      }
                     },
                     child: Container(
                         padding: const EdgeInsets.symmetric(
@@ -570,8 +716,14 @@ class _FoodDetailState extends State<FoodDetail> {
                   }
 
                   Navigator.pop(context); // 关闭 bottom sheet
-                  await detectionModify(
-                      Controller.c.foodDetail['id'], {'dishName': newName});
+                  final id = Controller.c.foodDetail['id'];
+                  if (id != null) {
+                    try {
+                      await detectionModify(id, {'dishName': newName});
+                    } catch (e) {
+                      print('Error modifying dish name: $e');
+                    }
+                  }
                 },
                 decoration: const InputDecoration(
                   focusedBorder: OutlineInputBorder(
@@ -585,5 +737,119 @@ class _FoodDetailState extends State<FoodDetail> {
         );
       },
     );
+  }
+
+  // 辅助方法：安全地获取 total 数据
+  Map<String, dynamic> _safeGetTotal() {
+    try {
+      final foodDetail = Controller.c.foodDetail;
+      final detectionResultData = foodDetail['detectionResultData'];
+      if (detectionResultData != null && detectionResultData is Map) {
+        final total = detectionResultData['total'];
+        if (total != null && total is Map) {
+          return Map<String, dynamic>.from(total);
+        }
+      }
+    } catch (e) {
+      print('Error getting total data: $e');
+    }
+    return {};
+  }
+
+  // 辅助方法：安全地获取 micronutrients
+  Map<String, dynamic> _safeGetMicronutrients() {
+    try {
+      final total = _safeGetTotal();
+      final micronutrients = total['micronutrients'];
+      if (micronutrients != null && micronutrients is Map) {
+        return Map<String, dynamic>.from(micronutrients);
+      }
+    } catch (e) {
+      print('Error getting micronutrients: $e');
+    }
+    return {};
+  }
+
+  // 辅助方法：安全地获取 ingredients
+  List<dynamic> _safeGetIngredients() {
+    try {
+      final foodDetail = Controller.c.foodDetail;
+      final detectionResultData = foodDetail['detectionResultData'];
+      if (detectionResultData != null && detectionResultData is Map) {
+        final ingredients = detectionResultData['ingredients'];
+        if (ingredients != null && ingredients is List) {
+          return List.from(ingredients);
+        }
+      }
+    } catch (e) {
+      print('Error getting ingredients: $e');
+    }
+    return [];
+  }
+
+  // 辅助方法：安全地获取数字值
+  num? _safeGetNum(dynamic value) {
+    if (value == null) return null;
+    if (value is num) return value;
+    if (value is String) {
+      final parsed = num.tryParse(value);
+      return parsed;
+    }
+    return null;
+  }
+
+  // 辅助方法：安全地获取日期字符串
+  String _safeGetDate(dynamic dateValue) {
+    try {
+      if (dateValue != null) {
+        return formatDate(dateValue);
+      }
+    } catch (e) {
+      print('Error formatting date: $e');
+    }
+    return '';
+  }
+
+  // 显示删除确认弹窗
+  void _showDeleteConfirmDialog(BuildContext context) async {
+    final foodDetail = Controller.c.foodDetail;
+    final dynamic idValue = foodDetail['id'];
+    final int? id = idValue is int ? idValue : (idValue is String ? int.tryParse(idValue) : null);
+    
+    if (id == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('CANNOT_GET_ITEM_ID'.tr)),
+      );
+      return;
+    }
+
+    final bool? confirmed = await showDeleteConfirmDialog(context);
+
+    if (confirmed != true) return;
+
+    try {
+      await detectionDelete(id);
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('DELETE_SUCCESS'.tr),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+        // 删除成功后返回上一页
+        Navigator.of(context).pop();
+      }
+    } catch (e) {
+      print('Error deleting food detail: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('${'DELETE_FAILED'.tr}: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 }

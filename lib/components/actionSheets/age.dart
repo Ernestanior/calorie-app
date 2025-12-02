@@ -14,7 +14,7 @@ class AgeSheet extends StatefulWidget {
 
 class _AgeSheetState extends State<AgeSheet> {
     late int initAge = widget.age;
-    late final ageWheel = WheelPickerController(itemCount: 90,initialIndex: initAge-10);
+    late final ageWheel = WheelPickerController(itemCount: 85,initialIndex: initAge-15);
 
   @override
   Widget build(BuildContext context) {
@@ -49,7 +49,7 @@ class _AgeSheetState extends State<AgeSheet> {
             height: 200,
             child: WheelPicker(
                   looping: false,
-                  builder: (context, index) => Text("${index+10} ${'YEARS'.tr}", style: textStyle),
+                  builder: (context, index) => Text("${index+15} ${'YEARS'.tr}", style: textStyle),
                   controller: ageWheel,
                   selectedIndexColor: Colors.black,
                   style: WheelPickerStyle( 
@@ -61,7 +61,7 @@ class _AgeSheetState extends State<AgeSheet> {
                   ),
                   onIndexChanged: (index,interactionType) {
                     setState(() {
-                      initAge=index+10;
+                      initAge=index+15;
                     });
                   },
                 )

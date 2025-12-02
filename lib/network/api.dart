@@ -23,8 +23,9 @@ class DioService {
   DioService._internal() {
     BaseOptions options = BaseOptions(
       baseUrl: baseUrl,
-      connectTimeout: const Duration(seconds: 60000),
-      receiveTimeout: const Duration(seconds: 60000),
+      connectTimeout: const Duration(seconds: 58),
+      receiveTimeout: const Duration(seconds: 58),
+      sendTimeout: const Duration(seconds: 58),
       headers: {
         'app-user-locale': 'zh_CN',
         'version': 'v1.2.15',
@@ -113,7 +114,7 @@ class DioService {
         return data['data'];
       } else {
         print('request error $data');
-        return data['msg'];
+        return "-1";
       }
     } catch (e) {
       print('请求失败: $e');
@@ -132,50 +133,72 @@ class DioService {
   }
 }
 
+// 首次进入app时获取用户信息，若无该用户则新建用户
 Future login(String id, dynamic data) => DioService()
     .request('/user/create', 'put', body: {'deviceId': id, ...data});
 
+// 修改用户
 Future userModify(dynamic data) => DioService().request('/user/modify', 'put',
     body: {'id': '${Controller.c.user['id']}', ...data});
 
+// 获取用户信息
 Future getUserDetail() => DioService().request('/user/detail', 'get',
     query: {'id': '${Controller.c.user['id']}'});
 
+// 删除用户
 Future userDelete() => DioService().request('/user/delete', 'delete',
     query: {'id': '${Controller.c.user['id']}'});
 
+// 饮食建议
 Future getUserDietaryAdvice() =>
     DioService().request('/user/list/dietary/advice', 'get',
         query: {'id': '${Controller.c.user['id']}'});
 
+// 目前弃用！ 图片base64
 Future imgRender(dynamic data) =>
     DioService().request('/render/start', 'post', body: data);
 
+// deepseek思考过程
 Future deepseekReason(Map data) => DioService()
     .request('/deepseek/create-reasoner', 'put', body: data, pass: true);
 
+// deepseek答案
 Future deepseekResult(Map data) => DioService()
     .request('/deepseek/create-chat', 'put', body: data, pass: true);
 
+// openAi思考过程
 Future openAiReason(Map data) => DioService()
     .request('/openAI/create-reasoner', 'put', body: data, pass: true);
 
+// openAi答案
 Future openAiResult(Map data) =>
     DioService().request('/openAI/create-chat', 'put', body: data, pass: true);
 
+// 每天的卡路里，碳水，脂肪，蛋白质记录
 Future dailyRecord(int userId, String date) =>
     DioService().request('/detection/count-by-date', 'post', body: {
       'userId': userId,
-      'startDateTime': '${date}T00:00:00',
-      'endDateTime': '${date}T23:59:59'
+      'startDateTime': '${date} 00:00:00',
+      'endDateTime': '${date} 23:59:59'
     });
 
+// 图片上传获取uri
 Future fileUpload(FormData data) =>
     DioService().request('/file/upload', 'put', body: data);
 
+// 扫描食物
 Future detectionCreate(dynamic data) =>
     DioService().request('/detection/create', 'put', body: data);
 
+// 一个月内的打卡记录
+Future detectionForMonth(String startDate, String endDate) => DioService()
+        .request('/detection/count-detection-times-by-date', 'post', body: {
+      'userId': Controller.c.user['id'],
+      'startDateTime': '$startDate 00:00:00',
+      'endDateTime': '$endDate 23:59:59',
+    });
+
+// 扫描食物记录
 Future detectionList(int page, int pageSize, {String? date}) {
   if (date == null) {
     return DioService().request('/detection/page', 'post', body: {
@@ -196,16 +219,18 @@ Future detectionList(int page, int pageSize, {String? date}) {
         'desc': 1,
         'sort': 'createDate'
       },
-      'startDateTime': '${date}T00:00:00',
-      'endDateTime': '${date}T23:59:59'
+      'startDateTime': '${date} 00:00:00',
+      'endDateTime': '${date} 23:59:59'
     });
   }
 }
 
+// 修改某个食物记录的名称
 Future detectionModify(int id, dynamic data) =>
     DioService().request('/detection/modify', 'put',
         body: {'userId': '${Controller.c.user['id']}', 'id': id, ...data});
 
+// 目前弃用！ 修改某个食物记录的早中晚餐
 Future detectionModify1(int id, String dishName, int mealType) =>
     DioService().request('/detection/modify', 'put', body: {
       'userId': '${Controller.c.user['id']}',
@@ -214,29 +239,9 @@ Future detectionModify1(int id, String dishName, int mealType) =>
       'mealType': mealType
     });
 
-Future detectionDelete() => DioService().request('/detection/delete', 'delete',
-    query: {'userId': '${Controller.c.user['id']}'});
-
-// 每日拍照记录
-Future recordPage(int page, int pageSize) =>
-    DioService().request('/foodNutrition/page', 'post', body: {
-      'id': Controller.c.user['id'],
-      'searchPage': {
-        'page': page,
-        'pageSize': pageSize,
-        'desc': 0,
-        'sort': 'createDate'
-      }
-    });
-
-Future recordDelete(dynamic data) =>
-    DioService().request('/foodNutrition/delete', 'delete', body: data);
-
-Future recordModify(dynamic data) =>
-    DioService().request('/foodNutrition/modify', 'put', body: data);
-
-Future recordCreate(dynamic data) =>
-    DioService().request('/foodNutrition/create', 'put', body: data);
+// 删除某个记录
+Future detectionDelete(int id) => DioService().request('/detection/delete', 'delete',
+    query: {'id': id});
 
 // 体重记录
 Future weightPage(String date) =>
@@ -246,12 +251,15 @@ Future weightPage(String date) =>
       'searchPage': {'page': 1, 'pageSize': 999, 'desc': 0, 'sort': 'id'}
     });
 
+// 删除体重
 Future weightDelete(int id) =>
     DioService().request('/weightRecord/delete', 'delete', body: {'id': id});
 
+// 修改体重
 Future weightModify(dynamic data) =>
     DioService().request('/weightRecord/modify', 'put', body: data);
 
+// 新增体重记录
 Future weightCreate(double weight) =>
     DioService().request('/weightRecord/create', 'put', body: {
       'userId': Controller.c.user['id'],
@@ -265,12 +273,14 @@ Future recipeSetPage() =>
       'visible': 1,
       'searchPage': {'page': 1, 'pageSize': 999, 'desc': 0, 'sort': 'id'}
     });
+
 // 用户收藏食谱的集合
 Future recipeSetCollects() =>
     DioService().request('/user/page/recipeSet', 'post', body: {
       'id': Controller.c.user['id'],
       'searchPage': {'page': 1, 'pageSize': 999, 'desc': 0, 'sort': 'id'}
     });
+
 // 每一天的三餐菜谱
 Future recipePage(int id, int day) =>
     DioService().request('/recipe/page', 'post', body: {
@@ -279,17 +289,107 @@ Future recipePage(int id, int day) =>
       'searchPage': {'page': 1, 'pageSize': 999, 'desc': 0, 'sort': 'id'}
     });
 
+// 苹果订阅验证
 Future appleJwsVerify(String receipt, String productId, String platform) =>
     DioService().request('/apple/jws/verify', 'post', pass: true, body: {
       'receipt': receipt,
       'productId': productId,
       'platform': platform,
-      'userId': '${Controller.c.user['id']}'
+      'userId': Controller.c.user['id']
     });
 
+// 新增反馈
 Future feedback(String content, String imageUrl) =>
     DioService().request('/feedback/create', 'put', body: {
       "id": Controller.c.user['id'],
       'content': content,
       'imageUrl': imageUrl
+    });
+
+/* 一饭封神接口 */
+// 食材列表
+Future yifanFoodIngredient(int page, int pageSize, {int? type}) =>
+    DioService().request('/yifan/recipe/foodIngredient/page', 'post', body: {
+      "searchPage": {
+        "page": page,
+        "pageSize": pageSize,
+        "desc": 0,
+        "sort": "id"
+      },
+      if (type != null) "type": type,
+    });
+// 菜系列表
+Future yifanFoodCuisine() =>
+    DioService().request('/yifan/recipe/foodCuisine/page', 'post', body: {
+      "searchPage": {"page": 1, "pageSize": 999, "desc": 0, "sort": "id"},
+    });
+// 生成菜品记录列表
+Future yifanRecipeResponsePage(
+  int page,
+  int pageSize,
+  int type
+) =>
+    DioService().request('/yifan/recipe/response/page', 'post', body: {
+      "searchPage": {
+        "page": page,
+        "pageSize": pageSize,
+        "desc": 1,
+        "sort": "id"
+      },
+      "type":type,
+      "userId": Controller.c.user['id'],
+    });
+// 删除某个生成菜品记录
+Future yifanRecipeResponseDelete(
+  int id,
+) =>
+    DioService().request('/yifan/recipe/response/delete', 'delete', query: {
+      "id": id,
+    });
+// 生成做菜步骤
+Future yifanRecipeGenerate(List<String> ingredients, int cuisineId,
+        String customPrompt, String locale) =>
+    DioService().request('/yifan/recipe/generate', 'post', body: {
+      "ingredients": ingredients,
+      "cuisine": {
+        "id": cuisineId,
+      },
+      "customPrompt": customPrompt,
+      "locale": locale,
+      "userId": Controller.c.user['id']
+    });
+// 生成菜品图片
+Future yifanImageGenerate(int id) =>
+    DioService().request('/yifan/image/generate', 'post', body: {
+      "recipeGenerateId": id,
+    });
+// 生成营养分析
+Future yifanNutritionAnalyze() =>
+    DioService().request('/yifan/nutrition/analyze', 'post', body: {});
+
+// 盲盒 - 获取菜品
+Future yifanRandomMeal(int mealType, {String? prompt}) =>
+    DioService().request('/yifan/random/meal', 'post', body: {
+      'locale': Controller.c.user['lang'],
+      'mealType': mealType,
+      if (prompt != null && prompt.trim().isNotEmpty) 'prompt': prompt,
+    });
+
+  // 盲盒 - 获取菜品营养信息
+Future yifanRandomMealNutrition(List<String> dishnames) =>
+    DioService().request('/yifan/random/meal/nutrition-analysis', 'post', body: {
+      'locale': Controller.c.user['lang'],
+      'dishNames': dishnames,
+    });
+
+// 盲盒 - 保存盲盒到数据库
+Future yifanRandomMealSave(String mealName,String imageUrl,String prompt,List<String> dishes, dynamic recipeResponse) =>
+    DioService().request('/yifan/random/meal/save','put', body: {
+      'locale': Controller.c.user['lang'],
+      "userId": Controller.c.user['id'],
+      "mealName":mealName,
+      'imageUrl':imageUrl,
+      'prompt':prompt,
+      'dishNames':dishes,
+      'recipeResponse': recipeResponse,
     });

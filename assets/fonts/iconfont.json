@@ -6,6 +6,167 @@
   "description": "",
   "glyphs": [
     {
+      "icon_id": "7543213",
+      "name": "大餐",
+      "font_class": "zu",
+      "unicode": "e620",
+      "unicode_decimal": 58912
+    },
+    {
+      "icon_id": "12498353",
+      "name": "32调查问卷",
+      "font_class": "tiaochawenjuan",
+      "unicode": "e668",
+      "unicode_decimal": 58984
+    },
+    {
+      "icon_id": "12952473",
+      "name": "儿童餐具",
+      "font_class": "ertongcanju",
+      "unicode": "e651",
+      "unicode_decimal": 58961
+    },
+    {
+      "icon_id": "21767493",
+      "name": "hot-pot",
+      "font_class": "hot-pot",
+      "unicode": "e625",
+      "unicode_decimal": 58917
+    },
+    {
+      "icon_id": "27764168",
+      "name": "征集调查",
+      "font_class": "zhengjitiaocha",
+      "unicode": "e626",
+      "unicode_decimal": 58918
+    },
+    {
+      "icon_id": "27702654",
+      "name": "历史记录",
+      "font_class": "lishijilu",
+      "unicode": "e61e",
+      "unicode_decimal": 58910
+    },
+    {
+      "icon_id": "7042314",
+      "name": "包子",
+      "font_class": "baozi",
+      "unicode": "e724",
+      "unicode_decimal": 59172
+    },
+    {
+      "icon_id": "7042317",
+      "name": "茶点",
+      "font_class": "chadian",
+      "unicode": "e725",
+      "unicode_decimal": 59173
+    },
+    {
+      "icon_id": "7042319",
+      "name": "面食",
+      "font_class": "mianshi",
+      "unicode": "e726",
+      "unicode_decimal": 59174
+    },
+    {
+      "icon_id": "7042320",
+      "name": "鸡",
+      "font_class": "ji",
+      "unicode": "e727",
+      "unicode_decimal": 59175
+    },
+    {
+      "icon_id": "7042324",
+      "name": "啤酒",
+      "font_class": "pijiu",
+      "unicode": "e728",
+      "unicode_decimal": 59176
+    },
+    {
+      "icon_id": "7042331",
+      "name": "甜品",
+      "font_class": "tianpin",
+      "unicode": "e729",
+      "unicode_decimal": 59177
+    },
+    {
+      "icon_id": "590982",
+      "name": "analysis",
+      "font_class": "analysis",
+      "unicode": "e61f",
+      "unicode_decimal": 58911
+    },
+    {
+      "icon_id": "40669012",
+      "name": "Data Analysis",
+      "font_class": "a-DataAnalysis",
+      "unicode": "e693",
+      "unicode_decimal": 59027
+    },
+    {
+      "icon_id": "43414966",
+      "name": "勾选",
+      "font_class": "gouxuan",
+      "unicode": "e7ed",
+      "unicode_decimal": 59373
+    },
+    {
+      "icon_id": "92481",
+      "name": "美食书",
+      "font_class": "meishishu",
+      "unicode": "e6e9",
+      "unicode_decimal": 59113
+    },
+    {
+      "icon_id": "167199",
+      "name": "美食",
+      "font_class": "meishi",
+      "unicode": "e66d",
+      "unicode_decimal": 58989
+    },
+    {
+      "icon_id": "206295",
+      "name": "日本料理",
+      "font_class": "ribenliaoli",
+      "unicode": "e63a",
+      "unicode_decimal": 58938
+    },
+    {
+      "icon_id": "2883693",
+      "name": "美食1",
+      "font_class": "meishi1",
+      "unicode": "e766",
+      "unicode_decimal": 59238
+    },
+    {
+      "icon_id": "41771024",
+      "name": "cooking",
+      "font_class": "cooking",
+      "unicode": "e70d",
+      "unicode_decimal": 59149
+    },
+    {
+      "icon_id": "44221533",
+      "name": "chef-hat",
+      "font_class": "chef-hat",
+      "unicode": "e67a",
+      "unicode_decimal": 59002
+    },
+    {
+      "icon_id": "44222090",
+      "name": "chef-hat",
+      "font_class": "chef-hat1",
+      "unicode": "e6cc",
+      "unicode_decimal": 59084
+    },
+    {
+      "icon_id": "10496929",
+      "name": "委托激活",
+      "font_class": "weituojihuo",
+      "unicode": "e61c",
+      "unicode_decimal": 58908
+    },
+    {
       "icon_id": "17412635",
       "name": "Scan",
       "font_class": "Scan",

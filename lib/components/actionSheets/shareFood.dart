@@ -17,6 +17,62 @@ class ShareFoodSheet extends StatefulWidget {
 
 class _ShareFoodSheetState extends State<ShareFoodSheet>  {
 
+  // 安全地获取数据
+  Map<String, dynamic> _safeGetTotal() {
+    try {
+      final foodDetail = Controller.c.foodDetail;
+      final detectionResultData = foodDetail['detectionResultData'];
+      if (detectionResultData != null && detectionResultData is Map) {
+        final total = detectionResultData['total'];
+        if (total != null && total is Map) {
+          return Map<String, dynamic>.from(total);
+        }
+      }
+    } catch (e) {
+      print('Error getting total data in ShareFoodSheet: $e');
+    }
+    return {};
+  }
+
+  // 安全地获取菜品名称
+  String _safeGetDishName() {
+    try {
+      final total = _safeGetTotal();
+      final dishName = total['dishName'];
+      if (dishName != null && dishName.toString().isNotEmpty) {
+        return dishName.toString();
+      }
+    } catch (e) {
+      print('Error getting dish name: $e');
+    }
+    return 'UNKNOWN_FOOD'.tr;
+  }
+
+  // 安全地获取图片URL
+  String? _safeGetImageUrl() {
+    try {
+      final foodDetail = Controller.c.foodDetail;
+      final sourceImg = foodDetail['sourceImg'];
+      if (sourceImg != null && sourceImg.toString().isNotEmpty) {
+        return sourceImg.toString();
+      }
+    } catch (e) {
+      print('Error getting image URL: $e');
+    }
+    return null;
+  }
+
+  // 安全地获取数字值
+  num? _safeGetNum(dynamic value) {
+    if (value == null) return null;
+    if (value is num) return value;
+    if (value is String) {
+      final parsed = num.tryParse(value);
+      return parsed;
+    }
+    return null;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -42,28 +98,63 @@ class _ShareFoodSheetState extends State<ShareFoodSheet>  {
                   children: [
                     ClipRRect(
                       borderRadius: BorderRadius.circular(12),
-                      child: Image.network(
-                        Controller.c.foodDetail['sourceImg'], // 这里换成你的食物图片
-                        height: 300,
-                        width: 300,
-                        fit: BoxFit.cover,
-                      ),
+                      child: _safeGetImageUrl() != null
+                          ? Image.network(
+                              _safeGetImageUrl()!,
+                              height: 300,
+                              width: 300,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) {
+                                // 图片加载失败时显示默认背景
+                                return Container(
+                                  height: 300,
+                                  width: 300,
+                                  color: Colors.grey[200],
+                                  child: const Icon(
+                                    Icons.restaurant_menu,
+                                    size: 60,
+                                    color: Colors.grey,
+                                  ),
+                                );
+                              },
+                              loadingBuilder: (context, child, loadingProgress) {
+                                if (loadingProgress == null) return child;
+                                return Container(
+                                  height: 300,
+                                  width: 300,
+                                  color: Colors.grey[200],
+                                  child: const Center(
+                                    child: CircularProgressIndicator(),
+                                  ),
+                                );
+                              },
+                            )
+                          : Container(
+                              height: 300,
+                              width: 300,
+                              color: Colors.grey[200],
+                              child: const Icon(
+                                Icons.restaurant_menu,
+                                size: 60,
+                                color: Colors.grey,
+                              ),
+                            ),
                     ),
                     Positioned(
                         left: 20,
                         bottom: 10,
                         child: Container(
-                          child: const Column(
+                          child: Column(
                             children: [
                               Text(
-                                "Sausage and Vegetables",
-                                style: TextStyle(
+                                _safeGetDishName(),
+                                style: const TextStyle(
                                     fontSize: 18,
                                     fontWeight: FontWeight.w600,
                                     color: Colors.white),
                                 textAlign: TextAlign.center,
                               ),
-                              SizedBox(height: 8),
+                              const SizedBox(height: 8),
                             ],
                           ),
                         )),
@@ -97,43 +188,37 @@ class _ShareFoodSheetState extends State<ShareFoodSheet>  {
                     children: [
                       _buildInfoCard(
                           "CALORIE".tr,
-                          Controller.c.foodDetail['detectionResultData']
-                              ['total']['calories'],
+                          _safeGetNum(_safeGetTotal()['calories']) ?? 0,
                           'kcal',
                           AliIcon.calorie2,
                           const Color.fromARGB(255, 255, 122, 82)),
                       _buildInfoCard(
                           "CARBS".tr,
-                          Controller.c.foodDetail['detectionResultData']
-                              ['total']['carbs'],
+                          _safeGetNum(_safeGetTotal()['carbs']) ?? 0,
                           'g',
                           AliIcon.dinner4,
                           Colors.blueAccent),
                       _buildInfoCard(
                           "PROTEIN".tr,
-                          Controller.c.foodDetail['detectionResultData']
-                              ['total']['protein'],
+                          _safeGetNum(_safeGetTotal()['protein']) ?? 0,
                           'g',
                           AliIcon.fat,
                           Colors.orangeAccent),
                       _buildInfoCard(
                           "FATS".tr,
-                          Controller.c.foodDetail['detectionResultData']
-                              ['total']['fat'],
+                          _safeGetNum(_safeGetTotal()['fat']) ?? 0,
                           'g',
                           AliIcon.meat2,
                           Colors.redAccent),
                       _buildInfoCard(
                           "SUGAR".tr,
-                          Controller.c.foodDetail['detectionResultData']
-                              ['total']['sugar'],
+                          _safeGetNum(_safeGetTotal()['sugar']) ?? 0,
                           'g',
                           AliIcon.sugar2,
                           const Color.fromARGB(255, 4, 247, 255)),
                       _buildInfoCard(
                           "FIBER".tr,
-                          Controller.c.foodDetail['detectionResultData']
-                              ['total']['fiber'],
+                          _safeGetNum(_safeGetTotal()['fiber']) ?? 0,
                           'g',
                           AliIcon.fiber,
                           const Color.fromARGB(255, 64, 255, 83)),
@@ -201,6 +286,9 @@ class _ShareFoodSheetState extends State<ShareFoodSheet>  {
 
   Widget _buildInfoCard(String title, Object? value, String unit, IconData icon,
       Color iconColor) {
+    // 安全地处理 value，确保显示有效值
+    final displayValue = value != null ? value.toString() : '0';
+    
     return Container(
         width: 150,
         padding: const EdgeInsets.all(12),
@@ -230,7 +318,7 @@ class _ShareFoodSheetState extends State<ShareFoodSheet>  {
                 const SizedBox(height: 4),
                 Text.rich(
                   TextSpan(
-                    text: "$value ",
+                    text: "$displayValue ",
                     style: const TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,

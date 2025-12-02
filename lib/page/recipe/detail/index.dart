@@ -146,7 +146,7 @@ class _RecipeDetailState extends State<RecipeDetail> {
                           child: Row(
                             children: [
                               _buildButton(
-                                  AliIcon.back2, () => Navigator.pop(context)),
+                                  AliIcon.left, () => Navigator.pop(context)),
                               Expanded(
                                 child: Align(
                                   alignment: Alignment.center,

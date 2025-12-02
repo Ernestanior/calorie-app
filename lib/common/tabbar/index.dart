@@ -13,7 +13,8 @@ class _CustomTabBarState extends State<CustomTabBar> {
   Widget build(BuildContext context) {
     final List<Map<String, dynamic>> _tabs = [
       {"icon": AliIcon.check, "label": "RECORD".tr},
-      {"icon": AliIcon.recipe3, "label": "RECIPE".tr},
+      {"icon": AliIcon.recipe3, "label": "PLAN".tr},
+      {"icon": AliIcon.chef2, "label": "CHEF".tr},
       {"icon": AliIcon.mine3, "label": "MINE".tr},
     ];
     return Positioned(
@@ -48,7 +49,6 @@ class _CustomTabBarState extends State<CustomTabBar> {
                         bottom: 0,
                         width: tabWidth,
                         child: Container(
-                          margin: const EdgeInsets.symmetric(horizontal: 8),
                           decoration: BoxDecoration(
                             color: const Color.fromARGB(90, 205, 205, 205),
                             borderRadius: BorderRadius.circular(24),

@@ -74,6 +74,11 @@ class _FloatBtnState extends State<FloatBtn>
         child: Obx(() => FloatingActionButton(
               shape: const CircleBorder(),
               onPressed: () async {
+                // Get.dialog(
+                //   const StarRatingDialog(),
+                //   barrierDismissible: false,
+                //   useSafeArea: true,
+                // );
                 var status = await Permission.camera.request();
                 print('status $status');
                 if (status.isDenied) {
@@ -96,8 +101,8 @@ class _FloatBtnState extends State<FloatBtn>
                   ? const Color.fromARGB(255, 0, 0, 0)
                   : Colors.grey,
               // splashColor:const Color.fromARGB(255, 0, 0, 0),
-              child: Icon(AliIcon.camera2,
-                  size: 35, color: const Color.fromARGB(255, 255, 255, 255)),
+              child: const Icon(AliIcon.camera2,
+                  size: 35, color: Color.fromARGB(255, 255, 255, 255)),
             )));
   }
 }

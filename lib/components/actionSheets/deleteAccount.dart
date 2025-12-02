@@ -6,6 +6,7 @@ import 'package:calorie/store/receiptController.dart';
 import 'package:calorie/store/store.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class DeleteAccount extends StatefulWidget {
   const DeleteAccount({super.key});
@@ -38,6 +39,9 @@ class _DeleteAccountState extends State<DeleteAccount>
       await DeviceIdManager.clearId();
       final deviceId = await DeviceIdManager.getId();
       var res = await login(deviceId, initData);
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('first_open', true);
+      print('delete $res');
       Controller.c.user(res);
       Controller.c.tabIndex(0);
       Get.updateLocale(getLocaleFromCode("en_US").value);
@@ -50,79 +54,145 @@ class _DeleteAccountState extends State<DeleteAccount>
     }
 
     return Container(
-      decoration: const BoxDecoration(
-          borderRadius: BorderRadius.all(Radius.circular(10)),
-          color: Colors.white),
-      height: 220,
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(children: [
-            const Icon(
-              Icons.warning,
-              color: Colors.red,
-            ),
-            Container(
-              width: 5,
-            ),
-            Text(
-              'DELETE_CONFIRMATION'.tr,
-              style: const TextStyle(
-                  color: Colors.red, fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-          ]),
-          Container(
-            height: 10,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(20),
+          topRight: Radius.circular(20),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 20,
+            offset: const Offset(0, -5),
           ),
+        ],
+      ),
+      padding: const EdgeInsets.fromLTRB(24, 32, 24, 24),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // 顶部指示条
+          Container(
+            width: 40,
+            height: 4,
+            decoration: BoxDecoration(
+              color: Colors.grey[300],
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          const SizedBox(height: 24),
+
+          // 警告图标
+          Container(
+            width: 64,
+            height: 64,
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFF2F2),
+              borderRadius: BorderRadius.circular(32),
+            ),
+            child: const Icon(
+              Icons.warning_amber_rounded,
+              color: Color(0xFFEF4444),
+              size: 32,
+            ),
+          ),
+          const SizedBox(height: 20),
+
+          // 标题
+          Text(
+            'DELETE_CONFIRMATION'.tr,
+            style: const TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.w700,
+              color: Color(0xFF1F2937),
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 12),
+
+          // 描述文字
           Text(
             'DELETE_CONFIRMATION_TIP'.tr,
             style: const TextStyle(
-              color: Colors.red,
-              fontSize: 12,
+              fontSize: 14,
+              color: Color(0xFF6B7280),
+              height: 1.5,
             ),
+            textAlign: TextAlign.center,
           ),
-          Container(
-            height: 10,
-          ),
+          const SizedBox(height: 32),
+
+          // 按钮组
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Expanded(
-                child: ElevatedButton(
-                  onPressed: () {
-                    Get.back();
-                  },
-                  style: ButtonStyle(
-                      backgroundColor: WidgetStateProperty.all(Colors.white),
-                      foregroundColor: WidgetStateProperty.all(
-                          const Color.fromARGB(255, 137, 137, 137)),
-                      shape: WidgetStateProperty.all(RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10)))),
-                  child: Text(
-                    'CANCEL'.tr,
-                    style: const TextStyle(fontWeight: FontWeight.bold),
+                child: Container(
+                  height: 48,
+                  decoration: BoxDecoration(
+                    border: Border.all(color: const Color(0xFFE5E7EB)),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: TextButton(
+                    onPressed: () => Get.back(),
+                    style: TextButton.styleFrom(
+                      backgroundColor: Colors.transparent,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: Text(
+                      'CANCEL'.tr,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF6B7280),
+                      ),
+                    ),
                   ),
                 ),
               ),
-              Container(
-                width: 20,
-              ),
+              const SizedBox(width: 12),
               Expanded(
-                  child: ElevatedButton(
-                onPressed: onSubmit,
-                style: ButtonStyle(
-                    backgroundColor: WidgetStateProperty.all(Colors.red),
-                    foregroundColor: WidgetStateProperty.all(Colors.white),
-                    shape: WidgetStateProperty.all(RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10)))),
-                child: Text(
-                  'CONFIRM'.tr,
-                  style: const TextStyle(fontWeight: FontWeight.bold),
+                child: Container(
+                  height: 48,
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFFEF4444), Color(0xFFDC2626)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFFEF4444).withOpacity(0.3),
+                        blurRadius: 8,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: TextButton(
+                    onPressed: onSubmit,
+                    style: TextButton.styleFrom(
+                      backgroundColor: Colors.transparent,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: Text(
+                      'CONFIRM'.tr,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
                 ),
-              ))
+              ),
             ],
-          )
+          ),
+          const SizedBox(height: 8),
         ],
       ),
     );

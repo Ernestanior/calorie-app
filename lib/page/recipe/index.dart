@@ -95,37 +95,10 @@ class _RecipePageState extends State<RecipePage>
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Column(
                   children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'RECIPE'.tr,
-                          style: GoogleFonts.ubuntu(
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black,
-                          ),
-                        ),
-                        GestureDetector(
-                          onTap: () {
-                            Navigator.pushNamed(context, '/recipeCollect');
-                          },
-                          child: Row(
-                            children: [
-                              const Icon(AliIcon.recipeSetting),
-                              const SizedBox(width: 5),
-                              Text(
-                                'MY_PLAN'.tr,
-                                style: const TextStyle(
-                                  fontSize: 15,
-                                  color: Colors.black,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
+                    const SizedBox(
+                      height: 20,
                     ),
+                    _buildAppBar(context),
                     const SizedBox(
                       height: 10,
                     ),
@@ -430,5 +403,65 @@ Widget buildCard({
         ],
       ),
     ),
+  );
+}
+
+Widget _buildAppBar(context) {
+  return Row(
+    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    children: [
+      Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'PLAN'.tr,
+            style: GoogleFonts.ubuntu(
+              fontSize: 26,
+              fontWeight: FontWeight.w800,
+              color: Colors.black,
+            ),
+          ),
+        ],
+      ),
+      Row(
+        children: [
+         
+          GestureDetector(
+            onTap: () {
+              Navigator.pushNamed(context, '/recipeCollect');
+            },
+            child: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                                      Color.fromARGB(255, 173, 255, 194),
+                  Color.fromARGB(255, 120, 208, 125),
+                  Color.fromARGB(255, 173, 255, 194),
+
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color.fromARGB(255, 255, 201, 39)
+                        .withOpacity(0.3),
+                    blurRadius: 10,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: const Icon(
+                AliIcon.collectFill,
+                color: Colors.white,
+                size: 20,
+              ),
+            ),
+          )
+        ],
+      )
+    ],
   );
 }

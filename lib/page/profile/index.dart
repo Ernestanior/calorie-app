@@ -62,7 +62,6 @@ class _ProfileState extends State<Profile>
   Future<void> _loadSteps() async {
     try {
       final steps = await _healthService.getTodaySteps();
-      print('steps $steps');
       setState(() {
         todaySteps = steps;
       });
@@ -160,11 +159,18 @@ class _ProfileState extends State<Profile>
   }
 
   Widget _buildHeader() {
-    return Text(
+    return Row(children: [
+Text(
       'MINE'.tr,
       style: const TextStyle(
           fontSize: 24, fontWeight: FontWeight.bold, color: Colors.black),
-    );
+    ),
+    Text(
+      '${Controller.c.user['id']}',
+      style: const TextStyle(
+          fontSize: 11,  color: Color.fromARGB(255, 157, 157, 157)),
+    )
+    ],) ;
   }
 
   List weightList = [

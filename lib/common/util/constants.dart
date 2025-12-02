@@ -45,6 +45,42 @@ final Map<int, Map<String, dynamic>> mealInfoMap = {
 
 Map<String, Map<String, String>> nutritionLabelMap() {
   return {
+    "calorie": {
+      "label": "CALORIE".tr,
+      "unit": "KCAL".tr,
+      "unitTranslate": "KCAL_UNIT".tr,
+      "desc": "CALORIE_DESC".tr,
+      "benefits": "CALORIE_BENEFITS".tr,
+      "risks": "CALORIE_RISKS".tr,
+      "sources": "CALORIE_SOURCES".tr
+    },
+    "carbs": {
+      "label": "CARBOHYDRATE".tr,
+      "unit": "G".tr,
+      "unitTranslate": "G_UNIT".tr,
+      "desc": "CARBOHYDRATE_DESC".tr,
+      "benefits": "CARBOHYDRATE_BENEFITS".tr,
+      "risks": "CARBOHYDRATE_RISKS".tr,
+      "sources": "CARBOHYDRATE_SOURCES".tr
+    },
+    "fat": {
+      "label": "FAT".tr,
+      "unit": "G".tr,
+      "unitTranslate": "G_UNIT".tr,
+      "desc": "FAT_DESC".tr,
+      "benefits": "FAT_BENEFITS".tr,
+      "risks": "FAT_RISKS".tr,
+      "sources": "FAT_SOURCES".tr
+    },
+    "protein": {
+      "label": "PROTEIN".tr,
+      "unit": "G".tr,
+      "unitTranslate": "G_UNIT".tr,
+      "desc": "PROTEIN_DESC".tr,
+      "benefits": "PROTEIN_BENEFITS".tr,
+      "risks": "PROTEIN_RISKS".tr,
+      "sources": "PROTEIN_SOURCES".tr
+    },
     "sugars": {
       "label": "SUGARS".tr,
       "unit": "G".tr,

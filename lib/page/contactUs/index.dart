@@ -19,8 +19,8 @@ class ContactUs extends StatefulWidget {
 class _ContactUsState extends State<ContactUs> {
   bool _isPicking = false;
   File? _image;
-  String content='';
-  String imgPath='';
+  String content = '';
+  String imgPath = '';
   String errorMsg = '';
   Future<void> _pickImage() async {
     if (_isPicking) return;
@@ -76,7 +76,6 @@ class _ContactUsState extends State<ContactUs> {
       setState(() {
         imgPath = url;
       });
-
     } catch (e) {
       print('选择图片出错: $e');
     } finally {
@@ -147,14 +146,14 @@ class _ContactUsState extends State<ContactUs> {
                       minLines: 5, // 默认显示行数
                       style: TextStyle(fontSize: 14),
                       onChanged: (value) async {
-                      final feedback = value.trim();
-                      print(feedback);
-                      if (feedback.isNotEmpty) {
-                        setState(() {
-                          content = feedback;
-                        });
-                      }
-                    },
+                        final feedback = value.trim();
+                        print(feedback);
+                        if (feedback.isNotEmpty) {
+                          setState(() {
+                            content = feedback;
+                          });
+                        }
+                      },
                       decoration: InputDecoration(
                         labelStyle: TextStyle(
                           fontSize: 12,
@@ -165,43 +164,65 @@ class _ContactUsState extends State<ContactUs> {
                       ),
                     ),
                   ),
-                   SizedBox(
+                  SizedBox(
                     height: 20,
                   ),
-                      Text('PHOTO_UPLOAD_OPTIONAL'.tr,style: TextStyle(fontWeight: FontWeight.bold),),
-                       SizedBox(
+                  Text(
+                    'PHOTO_UPLOAD_OPTIONAL'.tr,
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  SizedBox(
                     height: 10,
                   ),
-                    GestureDetector(
+                  GestureDetector(
                       onTap: _pickImage,
-                      child:  _image == null?  Container(
-                        padding: EdgeInsets.all(25),
-                        decoration: BoxDecoration(
-                            color: const Color.fromARGB(255, 244, 243, 250),
-                            borderRadius: BorderRadius.circular(10)),
-                        child: Icon(Icons.add, size: 30,color: Colors.grey,),
-                      ):ClipRRect(
-                borderRadius:
-                    const BorderRadius.all( Radius.circular(10)),
-                child: Image.file(_image!, height: 100,width: 100,fit:BoxFit.fill)
-                ,)
-                    )  ,
-                    SizedBox(
+                      child: _image == null
+                          ? Container(
+                              padding: EdgeInsets.all(25),
+                              decoration: BoxDecoration(
+                                  color:
+                                      const Color.fromARGB(255, 244, 243, 250),
+                                  borderRadius: BorderRadius.circular(10)),
+                              child: Icon(
+                                Icons.add,
+                                size: 30,
+                                color: Colors.grey,
+                              ),
+                            )
+                          : ClipRRect(
+                              borderRadius:
+                                  const BorderRadius.all(Radius.circular(10)),
+                              child: Image.file(_image!,
+                                  height: 100, width: 100, fit: BoxFit.fill),
+                            )),
+                  SizedBox(
                     height: 30,
                   ),
-                    buildCompleteButton(context,'SUBMIT_FEEDBACK'.tr,()async {
-                      print(content);
-                      print(imgPath);
-                      if (content!='' && imgPath !='' ) {
-                        await feedback(content,imgPath);
-                        Get.back();
-                      }else{
-                        setState(() {
-                          errorMsg="PLEASE_FILL_IN_COMPLETELY".tr;
-                        });
-                      }
-                }),
-                errorMsg==""?SizedBox.shrink():Text(errorMsg,style: TextStyle(color: Colors.red,))
+                  buildCompleteButton(context, 'SUBMIT_FEEDBACK'.tr, () async {
+                    print(content);
+                    print(imgPath);
+                    if (content.length < 10) {
+                      setState(() {
+                        errorMsg = 'FEEDBACK_MIN_LENGTH'.tr;
+                      });
+                    } else if (content.isNotEmpty && imgPath.isNotEmpty) {
+                      await feedback(content, imgPath);
+                      Get.back();
+                      setState(() {
+                        errorMsg = '';
+                      });
+                    } else {
+                      setState(() {
+                        errorMsg = "PLEASE_FILL_IN_COMPLETELY".tr;
+                      });
+                    }
+                  }),
+                  errorMsg == ""
+                      ? SizedBox.shrink()
+                      : Text(errorMsg,
+                          style: TextStyle(
+                            color: Colors.red,
+                          ))
                 ],
               ),
             ))));

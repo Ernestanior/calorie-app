@@ -3,6 +3,7 @@ import 'dart:math';
 import 'dart:ui';
 import 'package:calorie/common/icon/index.dart';
 import 'package:calorie/common/util/constants.dart';
+import 'package:calorie/components/dialog/delete.dart';
 import 'package:calorie/components/imgSwitcher/index.dart';
 import 'package:calorie/components/lottieFood/index.dart';
 import 'package:calorie/main.dart';
@@ -29,45 +30,275 @@ class _HomeState extends State<Home>
   dynamic dailyData = {'fat': 0, 'carbs': 0, 'calories': 0, 'protein': 0};
   List record = [];
   late Worker _homeDataWorker;
+  late Worker? _userReadyWorker = null;
+  bool _showMonthPicker = false;
+  late AnimationController _animationController;
+  late Animation<double> _animation;
+  DateTime _displayMonth = DateTime.now(); // 月份选择器当前显示的月份
+  bool _initialFetchDone = false; // 首次加载是否已完成
+  final Map<int, double> _swipeOffsets = {};
+  int? _activeSwipeId;
+  static const double _deleteButtonWidth = 65.0;
+
+  int? _getUserIdSafe() {
+    try {
+      final dynamic userState = Controller.c.user;
+      final dynamic idVal = userState['id'];
+      if (idVal is int && idVal > 0) return idVal;
+      return null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  // 该月内有记录的日期集合与计数
+  final Set<String> _recordedDays = <String>{};
+  final Map<String, int> _recordedCount = <String, int>{};
+
+  // 统一将 DateTime 转为 yyyy-MM-dd 字符串（零补齐）
+  String _toYmd(DateTime d) => DateFormat('yyyy-MM-dd').format(d);
+
+  void _onRecordHorizontalDragStart(int itemId, DragStartDetails details) {
+    setState(() {
+      _activeSwipeId = itemId;
+      final keys = List<int>.from(_swipeOffsets.keys);
+      for (final key in keys) {
+        if (key != itemId && (_swipeOffsets[key] ?? 0) != 0) {
+          _swipeOffsets[key] = 0.0;
+        }
+      }
+    });
+  }
+
+  void _onRecordHorizontalDragUpdate(int itemId, DragUpdateDetails details) {
+    setState(() {
+      final double currentOffset = _swipeOffsets[itemId] ?? 0.0;
+      double newOffset = currentOffset + details.delta.dx;
+      newOffset = newOffset.clamp(-_deleteButtonWidth, 0.0);
+      _swipeOffsets[itemId] = newOffset;
+    });
+  }
+
+  void _onRecordHorizontalDragEnd(int itemId) {
+    setState(() {
+      final double currentOffset = _swipeOffsets[itemId] ?? 0.0;
+      if (currentOffset < -_deleteButtonWidth / 2) {
+        _swipeOffsets[itemId] = -_deleteButtonWidth;
+        _activeSwipeId = itemId;
+      } else {
+        _swipeOffsets[itemId] = 0.0;
+        if (_activeSwipeId == itemId) {
+          _activeSwipeId = null;
+        }
+      }
+    });
+  }
+
+  void _closeRecordSwipe(int itemId) {
+    setState(() {
+      _swipeOffsets[itemId] = 0.0;
+      if (_activeSwipeId == itemId) {
+        _activeSwipeId = null;
+      }
+    });
+  }
+
+  Future<bool> _deleteRecordItem(dynamic item) async {
+    final int? itemId = item?['id'] is int
+        ? item['id'] as int
+        : (item?['id'] is String ? int.tryParse(item['id'].toString()) : null);
+    if (itemId == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('CANNOT_GET_ITEM_ID'.tr)),
+        );
+      }
+      return false;
+    }
+
+    final bool? confirmed = await showDeleteConfirmDialog(context);
+    if (confirmed != true) return false;
+
+    try {
+      await detectionDelete(itemId);
+      if (mounted) {
+        setState(() {
+          record.removeWhere((element) => element['id'] == itemId);
+          _swipeOffsets.remove(itemId);
+          if (_activeSwipeId == itemId) {
+            _activeSwipeId = null;
+          }
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('DELETE_SUCCESS'.tr),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+      return true;
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('${'DELETE_FAILED'.tr}: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+      return false;
+    }
+  }
+
+  void _onRecordDeleteTap(dynamic item) {
+    _deleteRecordItem(item);
+  }
+
+  // 读取用户创建日期（仅日期部分），用于限制可选范围
+  DateTime? _getUserCreateDateOnly() {
+    try {
+      final dynamic user = Controller.c.user;
+      final dynamic raw = user['createDate'];
+      if (raw is String && raw.isNotEmpty) {
+        // 期望格式: yyyy-MM-dd HH:mm:ss
+        final String normalized = raw.replaceAll('/', '-');
+        final String datePart = normalized.split(' ').first;
+        final parts = datePart.split('-');
+        if (parts.length >= 3) {
+          final y = int.tryParse(parts[0]);
+          final m = int.tryParse(parts[1]);
+          final da = int.tryParse(parts[2]);
+          if (y != null && m != null && da != null) {
+            return DateTime(y, m, da);
+          }
+        }
+      }
+    } catch (_) {}
+    return null; // 返回空表示不限制
+  }
 
   @override
   void initState() {
     super.initState();
-    fetchData(now);
+    // 如果用户ID已就绪，直接拉取；否则监听用户信息变化，等ID到位后再拉取一次
+    final int? readyId = _getUserIdSafe();
+    print('readyId $readyId');
+    if (readyId != null) {
+      _initialFetchDone = true;
+      fetchData(now);
+      _fetchMonthDetections(DateTime(currentDate.year, currentDate.month));
+    } else {
+      _userReadyWorker = ever<dynamic>(Controller.c.user, (dynamic u) {
+        final int? uid = _getUserIdSafe();
+        if (!_initialFetchDone && uid != null) {
+          _initialFetchDone = true;
+          fetchData(now);
+          _fetchMonthDetections(DateTime(currentDate.year, currentDate.month));
+        }
+      });
+    }
+
+    // 初始化动画控制器
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+    );
+    _animation = CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeInOut,
+    );
+
     // 监听触发器，触发后刷新数据
     // 保存 worker 引用
     _homeDataWorker = ever(Controller.c.refreshHomeDataTrigger, (triggered) {
       if (triggered == true) {
+        setState(() {
+          currentDate= DateTime.now();
+          currentDay=DateTime.now().weekday % 7;
+        });
         fetchData(DateTime.now());
+        _fetchMonthDetections(DateTime(currentDate.year, currentDate.month));
         Controller.c.refreshHomeDataTrigger.value = false;
       }
     });
   }
 
-  Future<void> fetchData(DateTime date) async {
-    if (Controller.c.user['id'] is int) {
-      try {
-        final res = await dailyRecord(
-            Controller.c.user['id'], DateFormat('yyyy-MM-dd').format(date));
-        final records = await detectionList(1, 18,
-            date: DateFormat('yyyy-MM-dd').format(date));
-        if (!mounted) return;
-        if (res != "-1") {
-          setState(() {
-            dailyData = res;
-          });
-        }
-        if (records.isNotEmpty) {
-          setState(() {
-            record = records['content'];
-          });
-        }
-      } catch (e) {
-        print('$e error');
-      }
+  // 拉取某个月份的记录分布
+  Future<void> _fetchMonthDetections(DateTime month) async {
+    // 若用户ID未就绪，直接跳过
+    final int? userId = _getUserIdSafe();
+    if (userId == null) return;
 
-      // final dayList = await detectionList();
+    final DateTime firstDay = DateTime(month.year, month.month, 1);
+    final DateTime lastDay = DateTime(month.year, month.month + 1, 0);
+    final String start = DateFormat('yyyy-MM-dd').format(firstDay);
+    final String end = DateFormat('yyyy-MM-dd').format(lastDay);
+    try {
+      final List<dynamic> res = await detectionForMonth(start, end);
+      _recordedDays.clear();
+      _recordedCount.clear();
+      for (final item in res) {
+        try {
+          final dynamic raw = item['date'];
+          final int count = (item['detectionTimes'] ?? 0) as int;
+          DateTime? d;
+          if (raw is String) {
+            d = DateTime.tryParse(raw);
+            if (d == null) {
+              // 兼容例如 yyyy-M-d 或使用斜线分隔
+              final String norm = raw.replaceAll('/', '-');
+              final parts = norm.split('-');
+              if (parts.length >= 3) {
+                final y = int.tryParse(parts[0]);
+                final m = int.tryParse(parts[1]);
+                final da = int.tryParse(parts[2]);
+                if (y != null && m != null && da != null) {
+                  d = DateTime(y, m, da);
+                }
+              }
+            }
+          } else if (raw is DateTime) {
+            d = raw;
+          }
+          if (d != null) {
+            final String key = DateFormat('yyyy-MM-dd').format(d);
+            _recordedDays.add(key);
+            _recordedCount[key] = count;
+          }
+        } catch (_) {}
+      }
+      if (mounted) setState(() {});
+    } catch (e) {
+      // 忽略该月标记失败，不影响其它功能
     }
+  }
+
+  Future<void> fetchData(DateTime date) async {
+    // 若用户ID未就绪，直接返回，不请求
+    final int? userId = _getUserIdSafe();
+    if (userId == null) return;
+    try {
+      final res =
+          await dailyRecord(userId, DateFormat('yyyy-MM-dd').format(date));
+      final records = await detectionList(1, 18,
+          date: DateFormat('yyyy-MM-dd').format(date));
+
+      if (!mounted) return;
+      if (res != "-1") {
+        setState(() {
+          dailyData = res;
+        });
+      }
+      if (records.isNotEmpty) {
+        setState(() {
+          record = records['content'];
+        });
+      }
+    } catch (e) {
+      print('$e error');
+    }
+
+    // final dayList = await detectionList();
   }
 
   @override
@@ -86,9 +317,20 @@ class _HomeState extends State<Home>
   @override
   void dispose() {
     _homeDataWorker.dispose(); // ✅ 取消监听，防止页面销毁后还触发回调
+    try {
+      _userReadyWorker?.dispose();
+    } catch (_) {}
+    _animationController.dispose(); // 释放动画控制器
     // 移除观察者
     routeObserver.unsubscribe(this);
     super.dispose();
+  }
+
+  // 判断两个日期是否为同一天
+  bool _isSameDay(DateTime date1, DateTime date2) {
+    return date1.year == date2.year &&
+        date1.month == date2.month &&
+        date1.day == date2.day;
   }
 
   @override
@@ -126,18 +368,15 @@ class _HomeState extends State<Home>
                   color: Colors.transparent,
                 ),
                 // 实际内容区域
-                Container(
-                  
-                  child: Column(
-                    children: [
-                      _buildAppBar(),
-                      _buildDateSelector(),
-                      const SizedBox(height: 5),
-                      _buildSummaryCard(),
-                      _buildNutrientCards(),
-                      _buildHistoryRecord(),
-                    ],
-                  ),
+                Column(
+                  children: [
+                    _buildAppBar(),
+                    _buildDateSelector(),
+                    const SizedBox(height: 5),
+                    _buildSummaryCard(),
+                    _buildNutrientCards(),
+                    _buildHistoryRecord(),
+                  ],
                 ),
                 // 底部安全区域的内容延伸
                 Container(
@@ -165,7 +404,7 @@ class _HomeState extends State<Home>
                       const Color.fromARGB(255, 171, 199, 255).withOpacity(0.9),
                       const Color.fromARGB(255, 171, 199, 255).withOpacity(0.0),
                     ],
-                    stops: [0.0, 0.5,0.75, 1.0],
+                    stops: [0.0, 0.5, 0.75, 1.0],
                   ),
                 ),
               ),
@@ -188,8 +427,47 @@ class _HomeState extends State<Home>
                       Colors.white.withOpacity(0.6),
                       Colors.white.withOpacity(0.0),
                     ],
-                    stops: [0.0, 0.5,0.75, 1.0],
+                    stops: [0.0, 0.5, 0.75, 1.0],
                   ),
+                ),
+              ),
+            ),
+          // 全屏点击区域，用于隐藏月份选择器
+          if (_showMonthPicker)
+            Positioned.fill(
+              child: GestureDetector(
+                onTap: () {
+                  setState(() {
+                    _showMonthPicker = false;
+                    _animationController.reverse();
+                  });
+                },
+                child: Container(
+                  color: Colors.transparent,
+                ),
+              ),
+            ),
+          // 浮动的月份选择器（放在全屏点击区域之上）
+          if (_showMonthPicker)
+            Positioned(
+              top: MediaQuery.of(context).padding.top + 100, // 在日期选择器下方
+              left: 16,
+              right: 16,
+              child: GestureDetector(
+                onTap: () {
+                  // 阻止事件冒泡到全屏点击区域
+                },
+                child: AnimatedBuilder(
+                  animation: _animation,
+                  builder: (context, child) {
+                    return Transform.scale(
+                      scale: _animation.value,
+                      child: Opacity(
+                        opacity: _animation.value,
+                        child: _buildMonthPicker(),
+                      ),
+                    );
+                  },
                 ),
               ),
             ),
@@ -224,12 +502,16 @@ class _HomeState extends State<Home>
       'SATURDAY'.tr
     ];
     DateTime now = DateTime.now(); // 当前日期
-    List<int> dates = List.generate(7,
-        (index) => now.subtract(Duration(days: now.weekday % 7 - index)).day);
+    // 根据当前选择的日期计算周日期
+    List<int> dates = List.generate(
+        7,
+        (index) => currentDate
+            .subtract(Duration(days: currentDate.weekday % 7 - index))
+            .day);
     List<DateTime> fullDates = List.generate(
         7,
-        (index) =>
-            now.subtract(Duration(days: now.weekday % 7 - index))); // 计算完整日期
+        (index) => currentDate.subtract(
+            Duration(days: currentDate.weekday % 7 - index))); // 计算完整日期
 
     return Container(
       decoration: BoxDecoration(
@@ -241,55 +523,368 @@ class _HomeState extends State<Home>
       margin: const EdgeInsets.only(top: 6, bottom: 12, left: 16, right: 16),
       padding: const EdgeInsets.only(top: 5, bottom: 5, left: 4, right: 4),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: List.generate(7, (index) {
-          bool isFutureDate = fullDates[index].isAfter(now); // 判断是否是未来日期
-
-          return GestureDetector(
-            onTap: isFutureDate
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          ...List.generate(7, (index) {
+            bool isFutureDate = fullDates[index].isAfter(now); // 判断是否是未来日期
+            bool isSelected = _isSameDay(fullDates[index], currentDate);
+            final String ymd = _toYmd(fullDates[index]);
+            final bool hasRecord = _recordedDays.contains(ymd);
+            final DateTime? createDateOnly = _getUserCreateDateOnly();
+            final DateTime? minSelectableDay = createDateOnly == null
                 ? null
-                : () {
-                    // 未来日期禁用点击
-                    fetchData(fullDates[index]);
-                    setState(() {
-                      currentDate = fullDates[index];
-                      currentDay = index;
-                    });
-                  },
+                : DateTime(createDateOnly.year, createDateOnly.month,
+                    createDateOnly.day);
+            final bool isBeforeCreate = minSelectableDay != null
+                ? fullDates[index].isBefore(minSelectableDay)
+                : false;
+
+            return Expanded(
+              child: GestureDetector(
+                onTap: (isFutureDate || isBeforeCreate)
+                    ? null
+                    : () {
+                        // 未来日期禁用点击
+                        fetchData(fullDates[index]);
+                        setState(() {
+                          currentDate = fullDates[index];
+                          currentDay = index;
+                          // 隐藏月份选择器
+                          _showMonthPicker = false;
+                          _animationController.reverse();
+                        });
+                        // 切换周/日后刷新对应月份的分布
+                        _fetchMonthDetections(
+                            DateTime(currentDate.year, currentDate.month));
+                      },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  decoration: BoxDecoration(
+                    color: isSelected && !isFutureDate
+                        ? Colors.white
+                        : Colors.transparent,
+                    borderRadius: BorderRadius.circular(10),
+                    boxShadow: isSelected && !isFutureDate
+                        ? [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.06),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            )
+                          ]
+                        : null,
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        days[index],
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          color: (isFutureDate || isBeforeCreate)
+                              ? Colors.grey
+                              : Colors.black,
+                          fontSize: 12,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        '${dates[index]}',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w700,
+                          color: (isFutureDate || isBeforeCreate)
+                              ? Colors.grey
+                              : Colors.black,
+                          fontSize: 13,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Icon(
+                        AliIcon.check2,
+                        size: 15,
+                        color: (isFutureDate || isBeforeCreate)
+                            ? Colors.grey[300]
+                            : (hasRecord
+                                ? const Color(0xFF22C55E)
+                                : Colors.grey[400]),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          }),
+          
+              GestureDetector(
+            onTap: () {
+              setState(() {
+                _showMonthPicker = !_showMonthPicker;
+                if (_showMonthPicker) {
+                  _animationController.forward();
+                } else {
+                  _animationController.reverse();
+                }
+              });
+            },
             child: Container(
-              padding: const EdgeInsets.all(8),
+              padding: const EdgeInsets.all(6),
               decoration: BoxDecoration(
-                color: index == currentDay && !isFutureDate
-                    ? Colors.white
-                    : Colors.transparent,
+                color: _showMonthPicker ? Colors.white : Colors.transparent,
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: Column(
-                children: [
-                  Text(
-                    days[index],
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color:
-                          isFutureDate ? Colors.grey : Colors.black, // 未来日期变灰色
-                      fontSize: 12,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    '${dates[index]}',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color:
-                          isFutureDate ? Colors.grey : Colors.black, // 未来日期变灰色
-                      fontSize: 12,
-                    ),
-                  ),
-                ],
+              child: Icon(
+                _showMonthPicker
+                    ? Icons.keyboard_arrow_up
+                    : Icons.keyboard_arrow_down,
+                color: Colors.black,
+                size: 18,
               ),
             ),
-          );
-        }),
+          ),
+        
+          
+          // 下拉按钮
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMonthPicker() {
+    DateTime now = DateTime.now();
+    DateTime firstDayOfMonth =
+        DateTime(_displayMonth.year, _displayMonth.month, 1);
+    DateTime lastDayOfMonth =
+        DateTime(_displayMonth.year, _displayMonth.month + 1, 0);
+    int daysInMonth = lastDayOfMonth.day;
+
+    // 计算月份第一天是星期几 (0=周日, 1=周一, ..., 6=周六)
+    int firstDayWeekday = firstDayOfMonth.weekday % 7;
+
+    // 生成该月所有日期
+    List<DateTime> monthDates = List.generate(daysInMonth, (index) {
+      return DateTime(_displayMonth.year, _displayMonth.month, index + 1);
+    });
+
+    // 创建完整的网格数据，包含空白占位符
+    List<Widget> gridItems = [];
+
+    // 添加空白占位符，使第一天对齐到正确的星期
+    for (int i = 0; i < firstDayWeekday; i++) {
+      gridItems.add(Container()); // 空白占位符
+    }
+
+    // 添加实际日期
+    final DateTime? createDateOnly = _getUserCreateDateOnly();
+    final DateTime? minSelectableDay = createDateOnly == null
+        ? null
+        : DateTime(
+            createDateOnly.year, createDateOnly.month, createDateOnly.day);
+    for (DateTime date in monthDates) {
+      bool isFutureDate = date.isAfter(now);
+      bool isSelected = _isSameDay(date, currentDate);
+      bool isBeforeCreate =
+          minSelectableDay != null ? date.isBefore(minSelectableDay) : false;
+      final String ymd = _toYmd(date);
+      final bool hasRecord = _recordedDays.contains(ymd);
+
+      gridItems.add(
+        GestureDetector(
+          onTap: (isFutureDate || isBeforeCreate)
+              ? null
+              : () {
+                  fetchData(date);
+                  setState(() {
+                    currentDate = date;
+                    _showMonthPicker = false; // 选择后关闭月份选择器
+                  });
+                  _animationController.reverse();
+                  // 切换日期后刷新对应月份的分布
+                  _fetchMonthDetections(
+                      DateTime(currentDate.year, currentDate.month));
+                },
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 4),
+            decoration: BoxDecoration(
+              color: isSelected ? Colors.black : Colors.transparent,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  '${date.day}',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 11,
+                    color: isSelected
+                        ? Colors.white
+                        : ((isFutureDate || isBeforeCreate)
+                            ? Colors.grey
+                            : Colors.black),
+                  ),
+                ),
+                const SizedBox(height: 2),
+                (isFutureDate || isBeforeCreate)
+                    ? const SizedBox(height: 13)
+                    : Icon(
+                        AliIcon.check2,
+                        size: 13,
+                        color: isSelected
+                            ? (hasRecord ? Colors.white : Colors.grey[500])
+                            : (hasRecord
+                                ? const Color(0xFF22C55E)
+                                : Colors.grey[300]),
+                      )
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    return Container(
+      decoration: BoxDecoration(
+        color: const Color.fromARGB(255, 255, 255, 255),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+            width: 1, color: const Color.fromARGB(150, 255, 255, 255)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.all(12),
+      child: Column(
+        children: [
+          // 月份标题和切换按钮
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              // 后退按钮
+              GestureDetector(
+                onTap: () {
+                  final DateTime? cd = _getUserCreateDateOnly();
+                  final DateTime currentFirst =
+                      DateTime(_displayMonth.year, _displayMonth.month, 1);
+                  final bool canGoPrev = cd == null
+                      ? true
+                      : currentFirst.isAfter(DateTime(cd.year, cd.month, 1));
+                  if (!canGoPrev) return;
+                  setState(() {
+                    _displayMonth =
+                        DateTime(_displayMonth.year, _displayMonth.month - 1);
+                  });
+                  _fetchMonthDetections(_displayMonth);
+                },
+                child: Container(
+                  padding: const EdgeInsets.all(5),
+                  decoration: BoxDecoration(
+                    color: () {
+                      final DateTime? cd = _getUserCreateDateOnly();
+                      final DateTime currentFirst =
+                          DateTime(_displayMonth.year, _displayMonth.month, 1);
+                      final bool disabled = cd != null &&
+                          !currentFirst.isAfter(DateTime(cd.year, cd.month, 1));
+                      return disabled ? Colors.grey[100] : Colors.grey[200];
+                    }(),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(AliIcon.left, size: 18, color: () {
+                    final DateTime? cd = _getUserCreateDateOnly();
+                    final DateTime currentFirst =
+                        DateTime(_displayMonth.year, _displayMonth.month, 1);
+                    final bool disabled = cd != null &&
+                        !currentFirst.isAfter(DateTime(cd.year, cd.month, 1));
+                    return disabled ? Colors.grey[400] : Colors.black;
+                  }()),
+                ),
+              ),
+              // 月份标题
+              Text(
+                DateFormat('yyyy-MM').format(_displayMonth),
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                  color: Colors.black,
+                ),
+              ),
+              // 前进按钮（不能选择未来月份）
+              GestureDetector(
+                onTap: _displayMonth.year == now.year &&
+                        _displayMonth.month == now.month
+                    ? null
+                    : () {
+                        setState(() {
+                          _displayMonth = DateTime(
+                              _displayMonth.year, _displayMonth.month + 1);
+                        });
+                        _fetchMonthDetections(_displayMonth);
+                      },
+                child: Container(
+                  padding: const EdgeInsets.all(5),
+                  decoration: BoxDecoration(
+                    color: (_displayMonth.year == now.year &&
+                            _displayMonth.month == now.month)
+                        ? Colors.grey[100]
+                        : Colors.grey[200],
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(
+                    AliIcon.right,
+                    size: 18,
+                    color: (_displayMonth.year == now.year &&
+                            _displayMonth.month == now.month)
+                        ? Colors.grey[400]
+                        : Colors.black,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          // 星期标题
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              'SUNDAY'.tr,
+              'MONDAY'.tr,
+              'TUESDAY'.tr,
+              'WEDNESDAY'.tr,
+              'THURSDAY'.tr,
+              'FRIDAY'.tr,
+              'SATURDAY'.tr
+            ].map((day) {
+              return Text(
+                day,
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 12,
+                  color: Colors.grey,
+                ),
+              );
+            }).toList(),
+          ),
+          // 日期网格
+          GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 7,
+              childAspectRatio: 0.8,
+              crossAxisSpacing: 4,
+              mainAxisSpacing: 4,
+            ),
+            itemCount: gridItems.length,
+            itemBuilder: (context, index) {
+              return gridItems[index];
+            },
+          ),
+        ],
       ),
     );
   }
@@ -507,8 +1102,8 @@ class _HomeState extends State<Home>
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text("ANALYZING_2".tr,
-                      style:
-                          const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                      style: const TextStyle(
+                          fontWeight: FontWeight.bold, fontSize: 13)),
                   const SizedBox(height: 10),
                   const LottieFood(), // 你已有的动画组件
                 ],
@@ -579,8 +1174,206 @@ class _HomeState extends State<Home>
     );
   }
 
+  Widget _buildHomeRecordCard(dynamic item, dynamic meal) {
+    final detectionResultData =
+        item is Map ? item['detectionResultData'] : null;
+    final totalData =
+        detectionResultData is Map ? detectionResultData['total'] : null;
+    final Map<String, dynamic> detectionData =
+        totalData is Map<String, dynamic> ? totalData : {};
+    final String dishName = (detectionData['dishName'] ?? '').toString().trim();
+    final String calories =
+        '${detectionData['calories'] ?? 0} ${'KCAL'.tr}';
+    final protein = detectionData['protein'] ?? 0;
+    final carbs = detectionData['carbs'] ?? 0;
+    final fat = detectionData['fat'] ?? 0;
+    final dynamic rawImg = item is Map ? item['sourceImg'] : null;
+    final String? imageUrl = rawImg?.toString();
+
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(10),
+        color: const Color.fromARGB(255, 247, 249, 255),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 90,
+            height: 90,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(10),
+            ),
+            clipBehavior: Clip.hardEdge,
+            child: imageUrl != null && imageUrl.isNotEmpty
+                ? Image.network(
+                    imageUrl,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Container(
+                        color: Colors.grey[200],
+                        child: const Icon(Icons.restaurant_menu, color: Colors.grey),
+                      );
+                    },
+                  )
+                : Container(
+                    color: Colors.grey[200],
+                    child: const Icon(Icons.restaurant_menu, color: Colors.grey),
+                  ),
+          ),
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 15),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      SizedBox(
+                        width: 130,
+                        child: Text(
+                          dishName.isEmpty ? 'UNKNOWN_FOOD'.tr : dishName,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                              fontWeight: FontWeight.bold, fontSize: 13),
+                        ),
+                      ),
+                      Row(
+                        children: [
+                          const Icon(AliIcon.calorie,
+                              size: 20, color: Color.fromARGB(255, 255, 133, 25)),
+                          const SizedBox(width: 2),
+                          Text(
+                            calories,
+                            style: const TextStyle(fontWeight: FontWeight.w600),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: meal?['color'] ?? const Color.fromARGB(255, 122, 226, 114),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      meal?['label'] ?? 'DINNER'.tr,
+                      style: const TextStyle(
+                          fontSize: 10, color: Colors.white, fontWeight: FontWeight.w600),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      const Icon(AliIcon.fat,
+                          size: 16, color: Color.fromARGB(255, 255, 204, 109)),
+                      const SizedBox(width: 2),
+                      Text("$protein${'G'.tr}", style: const TextStyle(fontSize: 11)),
+                      const SizedBox(width: 10),
+                      const Icon(AliIcon.dinner4,
+                          size: 16, color: Color.fromARGB(255, 102, 166, 255)),
+                      const SizedBox(width: 2),
+                      Text("$carbs${'G'.tr}", style: const TextStyle(fontSize: 11)),
+                      const SizedBox(width: 10),
+                      const Icon(AliIcon.meat2,
+                          size: 16, color: Color.fromARGB(255, 255, 124, 124)),
+                      const SizedBox(width: 2),
+                      Text("$fat${'G'.tr}", style: const TextStyle(fontSize: 11)),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRecordListItem(dynamic item) {
+    final meal = mealInfoMap[item['mealType']];
+    final int? itemId = item?['id'] is int
+        ? item['id'] as int
+        : (item?['id'] is String ? int.tryParse(item['id'].toString()) : null);
+    final card = _buildHomeRecordCard(item, meal);
+
+    void navigateToDetail() {
+      Controller.c.foodDetail(item);
+      Navigator.pushNamed(context, '/foodDetail');
+    }
+
+    if (itemId == null) {
+      return GestureDetector(
+        onTap: navigateToDetail,
+        child: Container(
+          margin: const EdgeInsets.only(bottom: 15),
+          child: card,
+        ),
+      );
+    }
+
+    final double offset = _swipeOffsets[itemId] ?? 0.0;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 15),
+      child: Stack(
+        children: [
+          Positioned.fill(
+            child: Container(
+              alignment: Alignment.centerRight,
+              child: Container(
+                width: _deleteButtonWidth - 5,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFECEC),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(14),
+                  onTap: () => _onRecordDeleteTap(item),
+                  child: const Center(
+                    child: Icon(
+                      Icons.delete_outline,
+                      color: Color.fromARGB(255, 255, 22, 22),
+                      size: 25,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+          GestureDetector(
+            onHorizontalDragStart: (details) =>
+                _onRecordHorizontalDragStart(itemId, details),
+            onHorizontalDragUpdate: (details) =>
+                _onRecordHorizontalDragUpdate(itemId, details),
+            onHorizontalDragEnd: (_) => _onRecordHorizontalDragEnd(itemId),
+            onTap: () {
+              if (offset < 0) {
+                _closeRecordSwipe(itemId);
+              } else {
+                navigateToDetail();
+              }
+            },
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              curve: Curves.easeOut,
+              transform: Matrix4.translationValues(offset, 0, 0),
+              child: card,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // 记录列表
   Widget _buildRecordList() {
     if (record.isEmpty && !Controller.c.isAnalyzing.value) {
+      // 判断选择的日期是否为今天
+      bool isToday = _isSameDay(currentDate, DateTime.now());
+
       return Container(
         margin: const EdgeInsets.only(top: 10),
         child: Column(
@@ -609,42 +1402,46 @@ class _HomeState extends State<Home>
                                   width: 4,
                                 ),
                                 Text(
-                                  'UPLOAD_YOUR_FOOD'.tr,
+                                  isToday
+                                      ? 'UPLOAD_YOUR_FOOD'.tr
+                                      : 'NO_RECORDS_PAST_DATE'.tr,
                                   style: const TextStyle(
                                       fontWeight: FontWeight.bold,
                                       fontSize: 16),
                                 ),
                               ],
                             ),
-                            const SizedBox(
-                              height: 8,
-                            ),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text(
-                                  "CLICK".tr,
-                                  style: const TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.bold,
+                            if (isToday) ...[
+                              const SizedBox(
+                                height: 8,
+                              ),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    "CLICK".tr,
+                                    style: const TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.bold,
+                                    ),
                                   ),
-                                ),
-                                const SizedBox(
-                                  width: 4,
-                                ),
-                                const Icon(AliIcon.camera),
-                                const SizedBox(
-                                  width: 4,
-                                ),
-                                Text(
-                                  "BUTTON".tr,
-                                  style: const TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.bold,
+                                  const SizedBox(
+                                    width: 4,
                                   ),
-                                ),
-                              ],
-                            ),
+                                  const Icon(AliIcon.camera),
+                                  const SizedBox(
+                                    width: 4,
+                                  ),
+                                  Text(
+                                    "BUTTON".tr,
+                                    style: const TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
                           ],
                         ),
                       ),
@@ -662,151 +1459,8 @@ class _HomeState extends State<Home>
         margin: const EdgeInsets.only(top: 10),
         padding: const EdgeInsets.only(bottom: 30),
         child: Column(
-            children: record.map((item) {
-          final meal = mealInfoMap[item['mealType']];
-          return GestureDetector(
-            onTap: () {
-              Controller.c.foodDetail(item);
-              Navigator.pushNamed(context, '/foodDetail');
-            },
-            child: Container(
-                margin: const EdgeInsets.only(bottom: 15),
-                decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(10),
-                    color: const Color.fromARGB(255, 247, 249, 255)),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 90,
-                      height: 90,
-                      decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(10)),
-                      clipBehavior: Clip.hardEdge,
-                      child: Image.network(
-                        item['sourceImg'],
-                        fit: BoxFit.cover,
-                      ),
-                    ),
-                    Expanded(
-                        child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 15),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Container(
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Row(
-                                  children: [
-                                    SizedBox(
-                                      width: 130,
-                                      child: Text(
-                                        (item['detectionResultData']['total']
-                                                        ?['dishName'] ??
-                                                    '')
-                                                .toString()
-                                                .trim()
-                                                .isEmpty
-                                            ? 'UNKNOWN_FOOD'.tr
-                                            : item['detectionResultData']
-                                                ['total']?['dishName'],
-                                        overflow: TextOverflow.ellipsis,
-                                        style: const TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 13),
-                                      ),
-                                    )
-                                  ],
-                                ),
-                                Row(
-                                  children: [
-                                    const Icon(AliIcon.calorie,
-                                        size: 20,
-                                        color:
-                                            Color.fromARGB(255, 255, 133, 25)),
-                                    const SizedBox(
-                                      width: 2,
-                                    ),
-                                    Text(
-                                      "${item['detectionResultData']['total']?['calories'] ?? 0} ${'KCAL'.tr}",
-                                      style: const TextStyle(
-                                          fontWeight: FontWeight.w600),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(
-                            height: 8,
-                          ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 3),
-                            decoration: BoxDecoration(
-                              color: meal?['color'] ??
-                                  const Color.fromARGB(255, 122, 226, 114),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: Text(
-                              meal?['label'] ?? 'DINNER'.tr,
-                              style: const TextStyle(
-                                  fontSize: 10,
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w600),
-                            ),
-                          ),
-                          const SizedBox(
-                            height: 8,
-                          ),
-                          Row(
-                            children: [
-                              const Icon(AliIcon.fat,
-                                  size: 16,
-                                  color: Color.fromARGB(255, 255, 204, 109)),
-                              const SizedBox(
-                                width: 2,
-                              ),
-                              Text(
-                                "${item['detectionResultData']['total']?['protein'] ?? 0}${'G'.tr}",
-                                style: const TextStyle(fontSize: 11),
-                              ),
-                              const SizedBox(
-                                width: 10,
-                              ),
-                              const Icon(AliIcon.dinner4,
-                                  size: 16,
-                                  color: Color.fromARGB(255, 102, 166, 255)),
-                              const SizedBox(
-                                width: 2,
-                              ),
-                              Text(
-                                "${item['detectionResultData']['total']?['carbs'] ?? 0}${'G'.tr}",
-                                style: const TextStyle(fontSize: 11),
-                              ),
-                              const SizedBox(
-                                width: 10,
-                              ),
-                              const Icon(AliIcon.meat2,
-                                  size: 16,
-                                  color: Color.fromARGB(255, 255, 124, 124)),
-                              const SizedBox(
-                                width: 2,
-                              ),
-                              Text(
-                                "${item['detectionResultData']['total']?['fat'] ?? 0}${'G'.tr}",
-                                style: const TextStyle(fontSize: 11),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    )),
-                  ],
-                )),
-          );
-        }).toList()),
+          children: record.map(_buildRecordListItem).toList(),
+        ),
       );
     }
   }

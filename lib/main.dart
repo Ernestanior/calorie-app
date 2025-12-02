@@ -5,8 +5,11 @@ import 'package:calorie/common/tabbar/index.dart';
 import 'package:calorie/common/util/deviceId.dart';
 import 'package:calorie/common/util/utils.dart';
 import 'package:calorie/network/api.dart';
+import 'package:calorie/page/lab/index.dart';
+import 'package:calorie/page/lab/aiCooking/history.dart';
 import 'package:calorie/page/aboutUs/index.dart';
 import 'package:calorie/page/aboutUs/service.dart';
+import 'package:calorie/page/chef/index.dart';
 import 'package:calorie/page/contactUs/index.dart';
 import 'package:calorie/page/premium/index.dart';
 import 'package:calorie/page/recipe/detail/index.dart';
@@ -76,14 +79,14 @@ void main() async {
   Future onLogin() async {
     try {
       var res = await login(deviceId, initData);
-      print(res);
+      print('userCreate $res');
       // 保存用户信息到全局
       if (res != "-1") {
         Controller.c.user(res);
         // 设置初始语言
         Controller.c.lang(res['lang']);
         langCode = res?['lang'] ?? 'en_US';
-
+        Get.updateLocale(getLocaleFromCode(langCode).value);
         // 延迟加载食谱数据，避免与其他初始化冲突
         Future.delayed(const Duration(milliseconds: 1000), () {
           try {
@@ -102,6 +105,7 @@ void main() async {
             // 设置初始语言
             Controller.c.lang(res['lang']);
             langCode = res?['lang'] ?? 'en_US';
+            Get.updateLocale(getLocaleFromCode(langCode).value);
 
             // 延迟加载食谱数据，避免与其他初始化冲突
             Future.delayed(const Duration(milliseconds: 1000), () {
@@ -203,6 +207,7 @@ class _CalAiAppState extends State<CalAiApp>
         GetPage(name: "/recipeDetail", page: () => RecipeDetail()),
         GetPage(name: "/foodDetail", page: () => FoodDetail()),
         GetPage(name: "/setting", page: () => Setting()),
+        GetPage(name: "/aiCookingHistory", page: () => AiCookingHistoryPage()),
       ],
     );
   }
@@ -219,6 +224,8 @@ class _BottomNavScreenState extends State<BottomNavScreen> {
   final List<Widget> _pages = [
     const Home(),
     const RecipePage(),
+    // const ChefPage(),
+    const LabPage(),
     const Profile(),
   ];
 
@@ -237,9 +244,17 @@ class _BottomNavScreenState extends State<BottomNavScreen> {
           });
         }
 
+        // 使用 IndexedStack 保持所有页面状态在内存中
         return Stack(
-            children: [_pages[Controller.c.tabIndex.value], CustomTabBar()]);
-      }), // 切换不同页面
+          children: [
+            IndexedStack(
+              index: Controller.c.tabIndex.value,
+              children: _pages,
+            ),
+            CustomTabBar(),
+          ],
+        );
+      }),
       floatingActionButton: const FloatBtn(),
       floatingActionButtonLocation: FloatingActionButtonLocation.endDocked,
     );

@@ -183,22 +183,29 @@ class _SurveyAnalysisState extends State<SurveyAnalysis>
   // --- 进度控制 ---
   void _startSlowProgress() async {
     while (progress < 0.8 && !isFastForward && !isDisposed) {
-      await Future.delayed(const Duration(milliseconds: 200));
+      await Future.delayed(const Duration(milliseconds: 100));
       if (!isDisposed) {
         setState(() {
-          progress += 0.02;
+          progress += 0.04;
           if (progress > 0.8) progress = 0.8;
         });
       }
     }
   }
 
-  void _jumpTo100() {
+  void _jumpTo100()async {
     if (isDisposed) return;
     setState(() {
       isFastForward = true;
-      progress = 1.0;
     });
+    while (progress < 1 && !isFastForward && !isDisposed) {
+      await Future.delayed(const Duration(milliseconds: 100));
+      if (!isDisposed) {
+        setState(() {
+          progress += 0.1;
+        });
+      }
+    }
   }
 
   // --- UI ---

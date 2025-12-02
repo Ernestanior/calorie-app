@@ -120,7 +120,7 @@ class _ScanResultState extends State<ScanResult> {
                 child: const CircleAvatar(
                   backgroundColor: Color.fromARGB(150, 241, 241, 241),
                   child: Icon(
-                    AliIcon.back2,
+                    AliIcon.left,
                     color: Colors.white,
                     size: 30,
                   ),
