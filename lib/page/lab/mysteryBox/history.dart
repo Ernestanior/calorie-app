@@ -216,7 +216,7 @@ class _MysteryBoxHistoryPageState extends State<MysteryBoxHistoryPage> {
     }
 
     // 获取 mealName，如果没有则使用默认值
-    String mealName = item['mealName']?.toString() ?? '';
+    String mealName = item['meal_name']?.toString() ?? '';
     if (mealName.isEmpty) {
       mealName = _mealTypeToDisplayName(mealType);
     }
@@ -352,6 +352,7 @@ class _MysteryBoxHistoryPageState extends State<MysteryBoxHistoryPage> {
     final Map<String, dynamic>? responseDto = item['responseDto'] as Map<String, dynamic>?;
     final String? imageUrl = responseDto?['imageUrl']?.toString();
     final int? mealType = item['mealType'] is int ? item['mealType'] as int : null;
+    final String mealName = item['meal_name'] ?? "";
     final String mealTypeName = _mealTypeToDisplayName(mealType);
     final String createDate = _formatDate(item['createDate']?.toString());
     final int? itemId = item['id'] is int ? item['id'] as int : null;
@@ -437,7 +438,7 @@ class _MysteryBoxHistoryPageState extends State<MysteryBoxHistoryPage> {
                           bottomLeft: Radius.circular(16),
                         ),
                         child: Image.network(
-                          imageUrl.startsWith('http') ? imageUrl : '$imgUrl$imageUrl',
+                          imageUrl,
                           width: 120,
                           height: 120,
                           fit: BoxFit.cover,
@@ -455,9 +456,9 @@ class _MysteryBoxHistoryPageState extends State<MysteryBoxHistoryPage> {
                       Container(
                         width: 120,
                         height: 120,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF7F7FA),
-                          borderRadius: const BorderRadius.only(
+                        decoration: const BoxDecoration(
+                          color: Color(0xFFF7F7FA),
+                          borderRadius: BorderRadius.only(
                             topLeft: Radius.circular(16),
                             bottomLeft: Radius.circular(16),
                           ),
@@ -474,7 +475,7 @@ class _MysteryBoxHistoryPageState extends State<MysteryBoxHistoryPage> {
                           children: [
                             // 标题（餐类型）
                             Text(
-                              mealTypeName,
+                              mealName,
                               style: GoogleFonts.inter(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w700,
@@ -588,9 +589,9 @@ class _MysteryBoxHistoryPageState extends State<MysteryBoxHistoryPage> {
               // Content
               Expanded(
                 child: _isLoading && _historyList.isEmpty
-                    ? Center(
+                    ? const Center(
                         child: CircularProgressIndicator(
-                          valueColor: AlwaysStoppedAnimation<Color>(const Color.fromARGB(255, 120, 208, 125)),
+                          valueColor: AlwaysStoppedAnimation<Color>(Color.fromARGB(255, 120, 208, 125)),
                         ),
                       )
                     : _error != null && _historyList.isEmpty
@@ -632,24 +633,52 @@ class _MysteryBoxHistoryPageState extends State<MysteryBoxHistoryPage> {
                         : _historyList.isEmpty
                             ? Center(
                                 child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    const Icon(Icons.history, size: 64, color: Colors.black38),
-                                    const SizedBox(height: 16),
+                                    const SizedBox(height: 150),
+                                    Image.asset(
+                                      'assets/image/rice.png',
+                                      height: 100,
+                                    ),
+                                    const SizedBox(height: 20),
                                     Text(
                                       'NO_HISTORY_RECORDS'.tr,
                                       style: GoogleFonts.inter(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.w700,
-                                        color: Colors.black87,
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w600,
+                                        color: const Color.fromARGB(255, 154, 148, 141),
                                       ),
+                                      textAlign: TextAlign.center,
                                     ),
                                     const SizedBox(height: 8),
                                     Text(
                                       'HISTORY_EMPTY_MESSAGE'.tr,
                                       style: GoogleFonts.inter(
                                         fontSize: 14,
-                                        color: Colors.black54,
+                                        color: const Color.fromARGB(255, 154, 148, 141),
+                                      ),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                    const SizedBox(height: 20),
+                                    GestureDetector(
+                                      onTap: () {
+                                        Navigator.pop(context);
+                                      },
+                                      child: Container(
+                                        width: 150,
+                                        padding: const EdgeInsets.symmetric(vertical: 8),
+                                        decoration: BoxDecoration(
+                                          color: const Color.fromARGB(255, 34, 32, 30),
+                                          borderRadius: BorderRadius.circular(20),
+                                        ),
+                                        child: Text(
+                                          'EXPLORE_RECIPES'.tr,
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 14,
+                                          ),
+                                          textAlign: TextAlign.center,
+                                        ),
                                       ),
                                     ),
                                   ],

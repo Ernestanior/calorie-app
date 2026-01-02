@@ -7,6 +7,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../../components/lottieFood/index.dart';
 import '../../../network/api.dart';
+import '../../../components/dialog/nutrition.dart';
 
 class MysteryMealDetailPage extends StatefulWidget {
   final String imageUrl;
@@ -72,9 +73,13 @@ class _MysteryMealDetailPageState extends State<MysteryMealDetailPage>
       return;
     }
     try {
-      final resp = await yifanRandomMealNutrition(widget.dishes);
+      final rawResp = await yifanRandomMealNutrition(widget.dishes);
+      final resp = rawResp is ApiResult ? rawResp : null;
+      final nutritionData = resp != null
+          ? (resp.ok ? resp.data : null)
+          : (rawResp is Map<String, dynamic> ? rawResp : null);
       if (!mounted) return;
-      if (resp == "-1" || resp == null) {
+      if (nutritionData == null) {
         throw Exception('Fetch nutrition failed');
       }
 
@@ -84,14 +89,14 @@ class _MysteryMealDetailPageState extends State<MysteryMealDetailPage>
           widget.imageUrl,
           widget.prompt ?? '',
           widget.dishes,
-          resp,
+          nutritionData,
         );
       } catch (e) {
         debugPrint('Failed to save random meal: $e');
       }
 
       setState(() {
-        _nutrition = resp as Map<String, dynamic>?;
+        _nutrition = nutritionData as Map<String, dynamic>?;
         _isLoading = false;
       });
     } catch (e) {
@@ -111,11 +116,11 @@ class _MysteryMealDetailPageState extends State<MysteryMealDetailPage>
         title: widget.mealName.isNotEmpty
             ? Text(
                 widget.mealName,
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
               )
             : Text(
                 'MYSTERY_BOX_DETAIL_TITLE'.tr,
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
               ),
         backgroundColor: const Color.fromARGB(255, 247, 255, 246),
         foregroundColor: Colors.black,
@@ -133,9 +138,9 @@ class _MysteryMealDetailPageState extends State<MysteryMealDetailPage>
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Container(
+              const SizedBox(
                 width: 200,
-                child: const LottieFood(size: 56, spacing: 16),
+                child: LottieFood(size: 56, spacing: 16),
               ),
               const SizedBox(height: 20),
               Text(
@@ -236,7 +241,7 @@ class _MysteryMealDetailPageState extends State<MysteryMealDetailPage>
               width: 20,
               height: 20,
             ),
-            SizedBox(
+            const SizedBox(
               width: 6,
             ),
             Text(
@@ -254,8 +259,8 @@ class _MysteryMealDetailPageState extends State<MysteryMealDetailPage>
           runSpacing: 8,
           children: widget.dishes
               .map((dish) => Chip(
-                    side: BorderSide(
-                        color: const Color.fromARGB(255, 210, 235, 206)),
+                    side: const BorderSide(
+                        color: Color.fromARGB(255, 210, 235, 206)),
                     label: Text(dish),
                     backgroundColor: const Color.fromARGB(255, 255, 255, 255),
                   ))
@@ -466,57 +471,66 @@ class _MysteryMealDetailPageState extends State<MysteryMealDetailPage>
 
   Widget _buildNutritionMetricCard(_NutritionMetric metric) {
     final Color accentColor = getNutritionIconColor(metric.label);
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: accentColor.withOpacity(0.08),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: accentColor.withOpacity(0.2),
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            metric.label,
-            style: GoogleFonts.notoSansSc(
-              fontSize: 12,
-              color: Colors.black54,
-            ),
+    final String? nutritionKey = getNutritionKey(metric.label);
+
+    return GestureDetector(
+      onTap: () {
+        if (nutritionKey != null) {
+          showNutritionInfoDialog(context, nutritionKey);
+        }
+      },
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: accentColor.withOpacity(0.08),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: accentColor.withOpacity(0.2),
           ),
-          const SizedBox(height: 6),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(
-                _formatMetricValue(metric.value!),
-                style: GoogleFonts.notoSansSc(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.black87,
-                ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              metric.label,
+              style: GoogleFonts.notoSansSc(
+                fontSize: 12,
+                color: Colors.black54,
               ),
-              const SizedBox(width: 4),
-              Padding(
-                padding: const EdgeInsets.only(bottom: 2),
-                child: Text(
-                  metric.unit,
+            ),
+            const SizedBox(height: 6),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  _formatMetricValue(metric.value!),
                   style: GoogleFonts.notoSansSc(
-                    fontSize: 12,
-                    color: Colors.black54,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.black87,
                   ),
                 ),
-              ),
-              const Spacer(),
-              Icon(
-                getNutritionIcon(metric.label),
-                size: 20,
-                color: accentColor,
-              ),
-            ],
-          ),
-        ],
+                const SizedBox(width: 4),
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 2),
+                  child: Text(
+                    metric.unit,
+                    style: GoogleFonts.notoSansSc(
+                      fontSize: 12,
+                      color: Colors.black54,
+                    ),
+                  ),
+                ),
+                const Spacer(),
+                Icon(
+                  getNutritionIcon(metric.label),
+                  size: 20,
+                  color: accentColor,
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -605,7 +619,7 @@ class _MysteryMealDetailPageState extends State<MysteryMealDetailPage>
   String _resolveImageUrl(String? url) {
     if (url == null || url.isEmpty) return '';
     if (url.startsWith('http')) return url;
-    return '$imgUrl$url';
+    return url;
   }
 }
 

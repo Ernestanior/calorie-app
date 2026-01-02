@@ -1,6 +1,4 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:calorie/network/api.dart';
@@ -26,20 +24,9 @@ class _FoodIngredientSelectorState extends State<FoodIngredientSelector> {
   bool _isLoading = false;
   final ScrollController _scrollController = ScrollController();
 
-  // 获取食材翻译后的名称
+  // 获取食材名称：直接使用后端返回的 name，避免因旧翻译资源导致名称错位
   String _getIngredientName(Map<String, dynamic> ingredient) {
-    // 如果有id，使用翻译key
-    if (ingredient['id'] != null) {
-      final id = ingredient['id'];
-      final translationKey = 'ingre_$id';
-      final translatedName = translationKey.tr;
-      // 如果翻译key存在（翻译后的值不等于key本身），则使用翻译
-      if (translatedName != translationKey) {
-        return translatedName;
-      }
-    }
-    // 如果没有id或翻译不存在，使用原始name
-    return ingredient['name'] ?? '';
+    return ingredient['name']?.toString() ?? '';
   }
 
   // 类型映射：-1 表示"常用"（特殊类别，不传type参数）
@@ -152,7 +139,7 @@ class _FoodIngredientSelectorState extends State<FoodIngredientSelector> {
         final ingredients = content.map<Map<String, dynamic>>((item) {
           return {
             'id': item['id'],
-            'name': item['name'],
+            'name': item['displayName'] ?? item['name'],
             'type': item['type'],
             'imageUrl': item['imageUrl'],
           };
@@ -164,11 +151,14 @@ class _FoodIngredientSelectorState extends State<FoodIngredientSelector> {
           } else {
             _cachedIngredients[categoryKey]!.addAll(ingredients);
           }
-          
+
+          final int total = (response['total'] ?? 0) as int;
+          final int pageSize = (response['pageSize'] ?? 20) as int;
+
           _categoryPages[categoryKey] = 1;
-          _categoryHasMore[categoryKey] = response['totalPages'] > 1;
+          _categoryHasMore[categoryKey] = total > pageSize;
           _loadedCategories.add(categoryKey);
-          
+
           _updateFilteredIngredients();
           _isLoading = false;
         });
@@ -203,7 +193,8 @@ class _FoodIngredientSelectorState extends State<FoodIngredientSelector> {
         final ingredients = content.map<Map<String, dynamic>>((item) {
           return {
             'id': item['id'],
-            'name': item['name'],
+            // 使用后端返回的 displayName（多语言），未提供时回退到原始 name
+            'name': item['displayName'] ?? item['name'],
             'type': item['type'],
             'imageUrl': item['imageUrl'],
           };
@@ -211,9 +202,13 @@ class _FoodIngredientSelectorState extends State<FoodIngredientSelector> {
 
         setState(() {
           _cachedIngredients[categoryKey]!.addAll(ingredients);
+
+          final int total = (response['total'] ?? 0) as int;
+          final int pageSize = (response['pageSize'] ?? 20) as int;
+
           _categoryPages[categoryKey] = currentPage;
-          _categoryHasMore[categoryKey] = response['totalPages'] > currentPage;
-          
+          _categoryHasMore[categoryKey] = total > currentPage * pageSize;
+
           _updateFilteredIngredients();
           _isLoading = false;
         });
@@ -438,7 +433,7 @@ class _FoodIngredientSelectorState extends State<FoodIngredientSelector> {
       backgroundColor: Colors.transparent,
       body: Container(
 
-        decoration: BoxDecoration(
+        decoration: const BoxDecoration(
           color:Color.fromARGB(255, 253, 252, 255),
         ),
         child: SafeArea(
@@ -531,9 +526,7 @@ class _FoodIngredientSelectorState extends State<FoodIngredientSelector> {
   }
 
   Widget _buildSelectedIngredientItem(Map<String, dynamic> ingredient) {
-    final imageUrl = ingredient['imageUrl'] != null
-        ? imgUrl+ingredient['imageUrl']
-        : null;
+    final imageUrl = ingredient['imageUrl'];
 
     return Container(
       margin: const EdgeInsets.only(right: 12),
@@ -642,7 +635,7 @@ class _FoodIngredientSelectorState extends State<FoodIngredientSelector> {
       width: 120,
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.only(topRight:Radius.circular(10) ),
+        borderRadius: const BorderRadius.only(topRight:Radius.circular(10) ),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.02),
@@ -662,7 +655,7 @@ class _FoodIngredientSelectorState extends State<FoodIngredientSelector> {
             child: Container(
               padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
               decoration: BoxDecoration(
-                color: isSelected ? Color.fromARGB(255, 251, 249, 255) : Colors.transparent,
+                color: isSelected ? const Color.fromARGB(255, 251, 249, 255) : Colors.transparent,
                 border: Border(
                   left: BorderSide(
                     color: isSelected ? const Color(0xFF0A1628) : Colors.transparent,
@@ -770,9 +763,7 @@ class _FoodIngredientSelectorState extends State<FoodIngredientSelector> {
   }
 
   Widget _buildIngredientItem(Map<String, dynamic> ingredient, GlobalKey key) {
-    final imageUrl = ingredient['imageUrl'] != null
-        ? imgUrl+ingredient['imageUrl']
-        : '';
+    final imageUrl = ingredient['imageUrl'] ?? '';
     final isSelected = _isSelected(ingredient);
 
     return Container(
@@ -863,7 +854,7 @@ class _FoodIngredientSelectorState extends State<FoodIngredientSelector> {
   Widget _buildBottomBar() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16),
-      decoration: BoxDecoration(
+      decoration: const BoxDecoration(
         color: Colors.white,
         gradient: LinearGradient(colors: 
         [Colors.white,Color.fromARGB(255, 253, 252, 255)])
@@ -972,9 +963,7 @@ class _FlyingIngredientWidgetState extends State<_FlyingIngredientWidget>
 
   @override
   Widget build(BuildContext context) {
-    final imageUrl = widget.ingredient['imageUrl'] != null
-        ? imgUrl + widget.ingredient['imageUrl']
-        : null;
+    final imageUrl = widget.ingredient['imageUrl'];
 
     return AnimatedBuilder(
       animation: _controller,

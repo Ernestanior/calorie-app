@@ -4,7 +4,7 @@ import 'package:uuid/uuid.dart';
 class DeviceIdManager {
   static const _storage = FlutterSecureStorage();
   static const _key = 'device_id';
-  static final _uuid = Uuid();
+  static const _uuid = Uuid();
 
   /// 获取设备唯一 ID
   static Future<String> getId() async {

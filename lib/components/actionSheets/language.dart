@@ -51,7 +51,7 @@ class _LanguageSheetState extends State<LanguageSheet> {
               Controller.c.lang(item['value']);
               Get.back();
             },
-            child: Text(item['label'], style: TextStyle(color: Colors.black, fontSize: 16)),
+            child: Text(item['label'], style: const TextStyle(color: Colors.black, fontSize: 16)),
           ),
           )
           ),

@@ -46,9 +46,17 @@ class _WeightState extends State<Weight> {
       try {
         final res = await weightPage(DateFormat('yyyy-MM-dd').format(DateTime.now()));
           if (!mounted) return;
-          List<dynamic> newList = res['content'].map((item)=>{"weight":item['weight'], "date":DateFormat('MMM d', 'en_US').format(DateTime.parse(item['date'].toString()))}).toList();
+          // 后端返回结构为 { content: [...], total, page, pageSize }
+          final List<dynamic> content = (res['content'] as List?) ?? [];
+          // 保留原始的 yyyy-MM-dd 字符串，图表内部再格式化展示，避免丢失年份信息
+          List<dynamic> newList = content
+              .map((item) => {
+                    "weight": item['weight'],
+                    "date": item['date']?.toString(),
+                  })
+              .toList();
           setState(() {
-            recordList=newList;
+            recordList = newList;
           });
       } catch (e) {
         print('$e error');
@@ -116,7 +124,7 @@ class _WeightState extends State<Weight> {
                 borderRadius: BorderRadius.circular(10),
                 color: const Color.fromARGB(255, 247, 246, 255),
               ),
-              padding: EdgeInsets.symmetric(horizontal: 10, vertical: 15),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 15),
               child: Column(
                 children: [
                   Obx(()=>Row(
@@ -138,7 +146,11 @@ class _WeightState extends State<Weight> {
                   )),
                   weightRecord(),
                   const SizedBox(height: 5,),
-                  WeightChart(unitType:unitType,recordList:recordList),
+                  WeightChart(
+                    unitType: unitType,
+                    recordList: recordList,
+                    targetWeight: (Controller.c.user['targetWeight'] as num?)?.toDouble() ?? 70,
+                  ),
                 ],
               ),
             )));
@@ -156,12 +168,12 @@ class _WeightState extends State<Weight> {
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         recordList.isEmpty?Row(
                 mainAxisAlignment: MainAxisAlignment.center,
-                children:[SizedBox(height:40), Text('NO_RECORDS'.tr,textAlign: TextAlign.center,)]):
+                children:[const SizedBox(height:40), Text('NO_RECORDS'.tr,textAlign: TextAlign.center,)]):
         SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Container(
-              padding: EdgeInsets.symmetric(vertical: 10),
-              margin: EdgeInsets.only(bottom: 5),
+              padding: const EdgeInsets.symmetric(vertical: 10),
+              margin: const EdgeInsets.only(bottom: 5),
               child: Row(
                 children: recordList
                     .map(
@@ -215,7 +227,7 @@ class _WeightState extends State<Weight> {
                     .toList(),
               ),
             )),
-            SizedBox(height: 10,),
+            const SizedBox(height: 10,),
         Center(
           child: GestureDetector(
                 onTap: ()=>Get.bottomSheet(WeightSheet(weight:Controller.c.user['currentWeight'].toDouble(),onChange:()=>fetchData())),
@@ -227,12 +239,12 @@ class _WeightState extends State<Weight> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(
+                  const Icon(
                     Icons.add,
                     color: Colors.white,
                     size: 16,
                   ),
-                  SizedBox(
+                  const SizedBox(
                     width: 3,
                   ),
                   Text(

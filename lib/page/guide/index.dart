@@ -65,7 +65,7 @@ class _GuidePageState extends State<GuidePage> {
                   ),
                 ),
               ),
-              LanguageSelector(),
+              const LanguageSelector(),
             ],
           ),
           const SizedBox(height: 10),
@@ -96,7 +96,7 @@ class _GuidePageState extends State<GuidePage> {
                 },
                 child: Text(
                   "GET_STARTED".tr,
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontSize: 18,
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
@@ -114,7 +114,7 @@ class _GuidePageState extends State<GuidePage> {
                 },
                 child: Text(
                   'SKIP'.tr,
-                  style: TextStyle(
+                  style: const TextStyle(
                     decoration: TextDecoration.underline,
                     color: Colors.black,
                     fontSize: 16,

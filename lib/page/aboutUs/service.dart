@@ -18,10 +18,10 @@ class _ServiceState extends State<Service> {
       backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
-        title: Text('TERMS_AND_CONDITIONS'.tr,style: TextStyle(fontWeight: FontWeight.bold,fontSize: 18),),
+        title: Text('TERMS_AND_CONDITIONS'.tr,style: const TextStyle(fontWeight: FontWeight.bold,fontSize: 18),),
       ),
       body: Container(
-        padding: EdgeInsets.symmetric(horizontal: 20),
+        padding: const EdgeInsets.symmetric(horizontal: 20),
         child:  SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,

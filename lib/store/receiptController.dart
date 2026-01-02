@@ -16,10 +16,6 @@ class RecipeController extends GetxController {
     isInitialized.value = true;
   }
 
-  @override
-  void onClose() {
-    super.onClose();
-  }
 
   /// 获取食谱数据
   void fetchRecipes() async {
@@ -30,9 +26,9 @@ class RecipeController extends GetxController {
     hasError.value = false;
 
     try {
-      final res = await recipeSetPage();
-      if (res != "-1" && res != null) {
-        recipeSets.value = res['content'] ?? [];
+      final res = await recipeSetPageResult();
+      if (res.ok && res.data != null) {
+        recipeSets.value = res.data?['content'] ?? [];
         hasError.value = false;
         print('Recipe data loaded successfully: ${recipeSets.length} items');
       } else {

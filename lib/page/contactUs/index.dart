@@ -93,7 +93,7 @@ class _ContactUsState extends State<ContactUs> {
           backgroundColor: Colors.white,
           title: Text(
             'CONTACT_US'.tr,
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
           ),
         ),
         body: GestureDetector(
@@ -103,29 +103,29 @@ class _ContactUsState extends State<ContactUs> {
             },
             child: SingleChildScrollView(
                 child: Padding(
-              padding: EdgeInsets.all(20),
+              padding: const EdgeInsets.all(20),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  SizedBox(
+                  const SizedBox(
                     height: 10,
                   ),
                   Text(
                     'BUSINESS_COOPERATION'.tr,
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
-                  SizedBox(
+                  const SizedBox(
                     height: 20,
                   ),
-                  MailButton(),
-                  SizedBox(
+                  const MailButton(),
+                  const SizedBox(
                     height: 50,
                   ),
                   Text(
                     'FEEDBACK'.tr,
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
-                  SizedBox(
+                  const SizedBox(
                     height: 20,
                   ),
                   Container(
@@ -133,18 +133,18 @@ class _ContactUsState extends State<ContactUs> {
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(12),
-                      boxShadow: [
+                      boxShadow: const [
                         BoxShadow(
                           color: Colors.black12,
                           blurRadius: 8,
                         ),
                       ],
                     ),
-                    padding: EdgeInsets.all(12),
+                    padding: const EdgeInsets.all(12),
                     child: TextField(
                       maxLines: null, // 多行
                       minLines: 5, // 默认显示行数
-                      style: TextStyle(fontSize: 14),
+                      style: const TextStyle(fontSize: 14),
                       onChanged: (value) async {
                         final feedback = value.trim();
                         print(feedback);
@@ -155,35 +155,35 @@ class _ContactUsState extends State<ContactUs> {
                         }
                       },
                       decoration: InputDecoration(
-                        labelStyle: TextStyle(
+                        labelStyle: const TextStyle(
                           fontSize: 12,
                         ),
                         hintText: "DESC_YOUR_QUESTION".tr,
-                        hintStyle: TextStyle(fontSize: 14, color: Colors.grey),
+                        hintStyle: const TextStyle(fontSize: 14, color: Colors.grey),
                         border: InputBorder.none, // 去掉边框
                       ),
                     ),
                   ),
-                  SizedBox(
+                  const SizedBox(
                     height: 20,
                   ),
                   Text(
                     'PHOTO_UPLOAD_OPTIONAL'.tr,
-                    style: TextStyle(fontWeight: FontWeight.bold),
+                    style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
-                  SizedBox(
+                  const SizedBox(
                     height: 10,
                   ),
                   GestureDetector(
                       onTap: _pickImage,
                       child: _image == null
                           ? Container(
-                              padding: EdgeInsets.all(25),
+                              padding: const EdgeInsets.all(25),
                               decoration: BoxDecoration(
                                   color:
                                       const Color.fromARGB(255, 244, 243, 250),
                                   borderRadius: BorderRadius.circular(10)),
-                              child: Icon(
+                              child: const Icon(
                                 Icons.add,
                                 size: 30,
                                 color: Colors.grey,
@@ -195,7 +195,7 @@ class _ContactUsState extends State<ContactUs> {
                               child: Image.file(_image!,
                                   height: 100, width: 100, fit: BoxFit.fill),
                             )),
-                  SizedBox(
+                  const SizedBox(
                     height: 30,
                   ),
                   buildCompleteButton(context, 'SUBMIT_FEEDBACK'.tr, () async {
@@ -218,9 +218,9 @@ class _ContactUsState extends State<ContactUs> {
                     }
                   }),
                   errorMsg == ""
-                      ? SizedBox.shrink()
+                      ? const SizedBox.shrink()
                       : Text(errorMsg,
-                          style: TextStyle(
+                          style: const TextStyle(
                             color: Colors.red,
                           ))
                 ],

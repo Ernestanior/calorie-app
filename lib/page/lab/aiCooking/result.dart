@@ -201,7 +201,6 @@ class _RecipeDetailPageState extends State<RecipeDetailPage>
     
     setState(() {
       _isLoadingImage = true;
-      _recipeImageUrl = null;
     });
     
     try {
@@ -506,11 +505,12 @@ class _RecipeDetailPageState extends State<RecipeDetailPage>
             : widget.cuisineName;
 
     // 将菜系中文名转换为翻译后的名称
-    final String cuisine = _getCuisineDisplayName(cuisineRaw);
+    final String cuisine = _getCuisineDisplayName(cuisineRaw).trim();
 
-    final List<Widget> chips = <Widget>[
-      _buildMetaChip(Icons.restaurant, cuisine),
-    ];
+    final List<Widget> chips = <Widget>[];
+    if (cuisine.isNotEmpty) {
+      chips.add(_buildMetaChip(Icons.restaurant, cuisine));
+    }
 
     if (isLoading) {
       chips
@@ -580,12 +580,12 @@ class _RecipeDetailPageState extends State<RecipeDetailPage>
                   builder: (context, child) {
                     return Transform.rotate(
                       angle: _hourglassController.value * 2 * 3.14159,
-                      child: Text('⏳',style: TextStyle(fontSize: 25),),
+                      child: const Text('⏳',style: TextStyle(fontSize: 25),),
                     );
                   },
                 )
               else
-                SizedBox.shrink()
+                const SizedBox.shrink()
             ],
           ),
           const SizedBox(height: 5),
@@ -738,11 +738,13 @@ class _RecipeDetailPageState extends State<RecipeDetailPage>
           ),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(16),
-            child: _isLoadingImage
-                ? _buildImageLoading()
-                : _recipeImageUrl != null
-                    ? _buildRecipeImage(_recipeImageUrl!)
-                    : const SizedBox.shrink(),
+            child: _recipeImageUrl != null
+                // 已经有图片时，优先展示当前图片，避免在重新加载时闪一下
+                ? _buildRecipeImage(_recipeImageUrl!)
+                // 首次还没图片时，才展示占位 loading
+                : (_isLoadingImage
+                    ? _buildImageLoading()
+                    : const SizedBox.shrink()),
           ),
         ),
       ],
@@ -772,7 +774,7 @@ class _RecipeDetailPageState extends State<RecipeDetailPage>
 
   Widget _buildRecipeImage(String imageUrl) {
     return Image.network(
-      imageUrl.startsWith('http') ? imageUrl : '$imgUrl$imageUrl',
+      imageUrl,
       width: double.infinity,
       fit: BoxFit.cover,
       loadingBuilder: (context, child, loadingProgress) {
@@ -788,8 +790,8 @@ class _RecipeDetailPageState extends State<RecipeDetailPage>
                   ? loadingProgress.cumulativeBytesLoaded /
                       loadingProgress.expectedTotalBytes!
                   : null,
-              valueColor: AlwaysStoppedAnimation<Color>(
-                const Color(0xFFFF6B35),
+              valueColor: const AlwaysStoppedAnimation<Color>(
+                Color(0xFFFF6B35),
               ),
             ),
           ),
@@ -878,7 +880,7 @@ class _RecipeDetailPageState extends State<RecipeDetailPage>
         Row(
           children: [
             
-            Text('📝',style: TextStyle(
+            const Text('📝',style: TextStyle(
                       fontSize: 16,)),
         const SizedBox(width: 3),
 
@@ -913,7 +915,7 @@ class _RecipeDetailPageState extends State<RecipeDetailPage>
                           ],
                         ),
                         child: Text(
-                          '$text',
+                          text,
                           style: GoogleFonts.inter(color: Colors.black87,fontSize: 13),
                         ),
                       );
@@ -1276,7 +1278,7 @@ class _RecipeDetailPageState extends State<RecipeDetailPage>
                       ],
                     ),
                   );
-                }).toList(),
+                }),
               ],
             ],
           ),
@@ -1338,7 +1340,7 @@ class _RecipeDetailPageState extends State<RecipeDetailPage>
             Expanded(
               child: _buildNutritionItem('SUGAR'.tr, sugar, 'g'),
             ),
-            Expanded(
+            const Expanded(
               child: SizedBox.shrink(),
             )
           ],

@@ -9,12 +9,12 @@ class NutritionPieChart extends StatelessWidget {
   final int fat;     // 克
 
   const NutritionPieChart({
-    Key? key,
+    super.key,
     required this.calories,
     required this.carb,
     required this.protein,
     required this.fat,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -24,12 +24,12 @@ class NutritionPieChart extends StatelessWidget {
     double fatPercent = total == 0 ? 0 : (fat / total * 100);
 
     return Container(
-      margin: EdgeInsets.symmetric(horizontal: 10),
-      padding:EdgeInsets.symmetric(vertical: 30,horizontal: 15),
+      margin: const EdgeInsets.symmetric(horizontal: 10),
+      padding:const EdgeInsets.symmetric(vertical: 30,horizontal: 15),
       decoration: BoxDecoration(
-        color: Color.fromARGB(255, 255, 255, 255),
+        color: const Color.fromARGB(255, 255, 255, 255),
         borderRadius: BorderRadius.circular(15),
-        boxShadow: [BoxShadow(color: const Color.fromARGB(31, 147, 147, 147), blurRadius: 10)],
+        boxShadow: const [BoxShadow(color: Color.fromARGB(31, 147, 147, 147), blurRadius: 10)],
       ),
       child:Row(
       crossAxisAlignment: CrossAxisAlignment.center,
@@ -54,21 +54,21 @@ class NutritionPieChart extends StatelessWidget {
               children: [
                 Text(
                   'CALORIC_INTAKE'.tr,
-                  style: TextStyle(
+                  style: const TextStyle(
                     color: Colors.black54,
                     fontSize: 10,
                   ),
                 ),
                 Text(
                   '${calories.toInt()}',
-                  style: TextStyle(
+                  style: const TextStyle(
                       fontSize: 14,
                       color: Colors.black,
                       fontWeight: FontWeight.bold),
                 ),
                 Text(
                   'KCAL'.tr,
-                  style: TextStyle(
+                  style: const TextStyle(
                     color: Colors.black54,
                     fontSize: 11,
                   ),
@@ -77,17 +77,17 @@ class NutritionPieChart extends StatelessWidget {
             )
           ],
         ),
-        SizedBox(width: 40),
+        const SizedBox(width: 40),
         // 右侧文字
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('NUTRIENT_RATIO'.tr,style:TextStyle(fontWeight: FontWeight.bold)),
-            SizedBox(height: 12),
+            Text('NUTRIENT_RATIO'.tr,style:const TextStyle(fontWeight: FontWeight.bold)),
+            const SizedBox(height: 12),
             _buildNutrientRow('CARBS'.tr, carbPercent, carb, const Color.fromARGB(255, 255, 216, 100)),
-            SizedBox(height: 12),
+            const SizedBox(height: 12),
             _buildNutrientRow('PROTEIN'.tr, proteinPercent, protein, Colors.pinkAccent),
-            SizedBox(height: 12),
+            const SizedBox(height: 12),
             _buildNutrientRow('FATS'.tr, fatPercent, fat, Colors.lightBlueAccent),
           ],
         )
@@ -126,16 +126,16 @@ class NutritionPieChart extends StatelessWidget {
           height: 10,
           decoration: BoxDecoration(color: color, shape: BoxShape.circle),
         ),
-        SizedBox(width: 6),
+        const SizedBox(width: 6),
         Text(
           '$name ${percent.toStringAsFixed(1)}%',
-          style: TextStyle(fontSize: 12, color: Colors.black87),
+          style: const TextStyle(fontSize: 12, color: Colors.black87),
         ),
-                SizedBox(width: 16),
+                const SizedBox(width: 16),
 
         Text(
           '${gram}g',
-          style: TextStyle(fontSize: 12, color: Colors.black87),
+          style: const TextStyle(fontSize: 12, color: Colors.black87),
         ),
       ],
     );

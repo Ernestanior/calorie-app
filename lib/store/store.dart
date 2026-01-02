@@ -84,7 +84,7 @@ class Controller extends GetxController {
       await detectionCreate({
         'userId': Controller.c.user['id'],
         'mealType': Controller.c.image['mealType'],
-        'sourceImg': imgUrl + url
+        'sourceImg': url
       });
 
       isRealRequestFinished = true; // ✅ 真实请求已完成，终止模拟进度
@@ -96,9 +96,9 @@ class Controller extends GetxController {
       if (Controller.c.user['firstTry'] == 0) {
         // 更新 firstTry 为 1
         try {
-          var res = await userModify({'firstTry': 1});
-          if (res != '-1') {
-            Controller.c.user(res);
+          var res = await userModifyResult({'firstTry': 1});
+          if (res.ok && res.data != null) {
+            Controller.c.user(res.data);
             // 延迟显示评分弹窗，让用户看到分析完成的效果
           }
           Future.delayed(const Duration(milliseconds: 1500), () async {

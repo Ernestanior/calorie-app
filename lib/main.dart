@@ -9,7 +9,6 @@ import 'package:calorie/page/lab/index.dart';
 import 'package:calorie/page/lab/aiCooking/history.dart';
 import 'package:calorie/page/aboutUs/index.dart';
 import 'package:calorie/page/aboutUs/service.dart';
-import 'package:calorie/page/chef/index.dart';
 import 'package:calorie/page/contactUs/index.dart';
 import 'package:calorie/page/premium/index.dart';
 import 'package:calorie/page/recipe/detail/index.dart';
@@ -74,18 +73,18 @@ void main() async {
   ]);
   final deviceId = await DeviceIdManager.getId();
   var langCode = 'en_US';
-  StreamSubscription? _netSub;
+  StreamSubscription? netSub;
 
   Future onLogin() async {
     try {
-      var res = await login(deviceId, initData);
-      print('userCreate $res');
+      final res = await loginResult(deviceId, initData);
+      print('userCreate ${res.data}');
       // 保存用户信息到全局
-      if (res != "-1") {
-        Controller.c.user(res);
+      if (res.ok && res.data != null) {
+        Controller.c.user(res.data);
         // 设置初始语言
-        Controller.c.lang(res['lang']);
-        langCode = res?['lang'] ?? 'en_US';
+        Controller.c.lang(res.data?['lang']);
+        langCode = res.data?['lang'] ?? 'en_US';
         Get.updateLocale(getLocaleFromCode(langCode).value);
         // 延迟加载食谱数据，避免与其他初始化冲突
         Future.delayed(const Duration(milliseconds: 1000), () {
@@ -96,18 +95,15 @@ void main() async {
           }
         });
       } else {
-        print("❌ 用户创建失败，5 秒后重试一次...");
+        print("❌ 用户创建失败，5 秒后重试一次... code=${res.code} message=${res.message}");
         Future.delayed(const Duration(seconds: 5), () async {
-          var res = await login(deviceId, initData);
-          // 保存用户信息到全局
-          if (res != "-1") {
-            Controller.c.user(res);
-            // 设置初始语言
-            Controller.c.lang(res['lang']);
-            langCode = res?['lang'] ?? 'en_US';
+          final retryRes = await loginResult(deviceId, initData);
+          if (retryRes.ok && retryRes.data != null) {
+            Controller.c.user(retryRes.data);
+            Controller.c.lang(retryRes.data?['lang']);
+            langCode = retryRes.data?['lang'] ?? 'en_US';
             Get.updateLocale(getLocaleFromCode(langCode).value);
 
-            // 延迟加载食谱数据，避免与其他初始化冲突
             Future.delayed(const Duration(milliseconds: 1000), () {
               try {
                 RecipeController.r.safeFetchRecipes();
@@ -118,12 +114,12 @@ void main() async {
           }
         });
 
-        _netSub?.cancel();
-        _netSub = Connectivity().onConnectivityChanged.listen((result) async {
+        netSub?.cancel();
+        netSub = Connectivity().onConnectivityChanged.listen((result) async {
           if (result != ConnectivityResult.none) {
             print("🌐 网络恢复，重新尝试创建用户...");
             await onLogin();
-            _netSub?.cancel();
+            netSub?.cancel();
           }
         });
       }
@@ -178,36 +174,36 @@ class _CalAiAppState extends State<CalAiApp>
       home: widget.initialPage,
       getPages: [
         // GetPage(name: "/", page: () => BottomNavScreen()),
-        GetPage(name: "/home", page: () => BottomNavScreen()),
-        GetPage(name: "/profile", page: () => Profile()),
+        GetPage(name: "/home", page: () => const BottomNavScreen()),
+        GetPage(name: "/profile", page: () => const Profile()),
         GetPage(
-            name: "/profileDetail", page: () => ProfileDetail()), // 详情页（无底部导航）
-        GetPage(name: "/weight", page: () => Weight()),
+            name: "/profileDetail", page: () => const ProfileDetail()), // 详情页（无底部导航）
+        GetPage(name: "/weight", page: () => const Weight()),
         GetPage(
           name: "/premium",
-          page: () => Premium(),
+          page: () => const Premium(),
           preventDuplicates: true,
           popGesture: false,
         ),
-        GetPage(name: "/step", page: () => StepPage()),
-        GetPage(name: "/guide", page: () => GuidePage()),
-        GetPage(name: "/contactUs", page: () => ContactUs()),
-        GetPage(name: "/aboutUs", page: () => AboutUs()),
-        GetPage(name: "/privacy", page: () => Privacy()),
-        GetPage(name: "/service", page: () => Service()),
-        GetPage(name: "/camera", page: () => CameraScreen()),
-        GetPage(name: "/records", page: () => Records()),
-        GetPage(name: "/scan", page: () => ScanAnimationPage()),
-        GetPage(name: "/scanResult", page: () => ScanResult()),
-        GetPage(name: "/survey", page: () => MultiStepForm()),
-        GetPage(name: "/surveyAnalysis", page: () => SurveyAnalysis()),
-        GetPage(name: "/surveyResult", page: () => SurveyResult()),
-        GetPage(name: "/recipe", page: () => RecipePage()),
-        GetPage(name: "/recipeCollect", page: () => RecipeCollect()),
-        GetPage(name: "/recipeDetail", page: () => RecipeDetail()),
-        GetPage(name: "/foodDetail", page: () => FoodDetail()),
-        GetPage(name: "/setting", page: () => Setting()),
-        GetPage(name: "/aiCookingHistory", page: () => AiCookingHistoryPage()),
+        GetPage(name: "/step", page: () => const StepPage()),
+        GetPage(name: "/guide", page: () => const GuidePage()),
+        GetPage(name: "/contactUs", page: () => const ContactUs()),
+        GetPage(name: "/aboutUs", page: () => const AboutUs()),
+        GetPage(name: "/privacy", page: () => const Privacy()),
+        GetPage(name: "/service", page: () => const Service()),
+        GetPage(name: "/camera", page: () => const CameraScreen()),
+        GetPage(name: "/records", page: () => const Records()),
+        GetPage(name: "/scan", page: () => const ScanAnimationPage()),
+        GetPage(name: "/scanResult", page: () => const ScanResult()),
+        GetPage(name: "/survey", page: () => const MultiStepForm()),
+        GetPage(name: "/surveyAnalysis", page: () => const SurveyAnalysis()),
+        GetPage(name: "/surveyResult", page: () => const SurveyResult()),
+        GetPage(name: "/recipe", page: () => const RecipePage()),
+        GetPage(name: "/recipeCollect", page: () => const RecipeCollect()),
+        GetPage(name: "/recipeDetail", page: () => const RecipeDetail()),
+        GetPage(name: "/foodDetail", page: () => const FoodDetail()),
+        GetPage(name: "/setting", page: () => const Setting()),
+        GetPage(name: "/aiCookingHistory", page: () => const AiCookingHistoryPage()),
       ],
     );
   }
@@ -251,7 +247,7 @@ class _BottomNavScreenState extends State<BottomNavScreen> {
               index: Controller.c.tabIndex.value,
               children: _pages,
             ),
-            CustomTabBar(),
+            const CustomTabBar(),
           ],
         );
       }),

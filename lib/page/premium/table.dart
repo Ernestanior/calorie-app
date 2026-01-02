@@ -9,7 +9,7 @@ class VipFeatures extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
           color: Colors.white, borderRadius: BorderRadius.circular(15)),
-      padding: EdgeInsets.all(20),
+      padding: const EdgeInsets.all(20),
       child: Column(
         children: [
           _buildSectionTitle('Features'),
@@ -40,7 +40,7 @@ class VipFeatures extends StatelessWidget {
       style: GoogleFonts.ubuntu(
         fontSize: 18,
         fontWeight: FontWeight.bold,
-        color: Color(0xFF444444),
+        color: const Color(0xFF444444),
       ),
     );
   }
@@ -66,10 +66,10 @@ class VipFeatures extends StatelessWidget {
         children: [
           // 表头行
           Container(
-            decoration: BoxDecoration(
+            decoration: const BoxDecoration(
               borderRadius:
-                  const BorderRadius.vertical(top: Radius.circular(10)),
-              color: const Color.fromARGB(255, 255, 248, 245),
+                  BorderRadius.vertical(top: Radius.circular(10)),
+              color: Color.fromARGB(255, 255, 248, 245),
             ),
             padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
             child: Row(
@@ -87,7 +87,7 @@ class VipFeatures extends StatelessWidget {
                     child: Text('Pro',
                         style: GoogleFonts.ubuntu(
                             fontWeight: FontWeight.bold,
-                            color: Color(0xFFEEB100))),
+                            color: const Color(0xFFEEB100))),
                   ),
                 ),
                 Expanded(

@@ -5,13 +5,13 @@ import 'package:calorie/network/api.dart';
 
 class UserInfo {
   getUserInfo() async {
-      final res = await getUserDetail();
+      final res = await getUserDetailResult();
       print('UserInfo $res');
-      if(res == "-1"){
+      if(!res.ok || res.data == null){
         return;
       }
       Locale locale;
-      if (res['lang'] == 'en_US') {
+      if (res.data?['lang'] == 'en_US') {
         locale = const Locale('en', 'US');
         Get.updateLocale(locale);
       } else {
@@ -19,7 +19,7 @@ class UserInfo {
         Get.updateLocale(locale);
       }
 
-      Controller.c.user(res);
-      Controller.c.lang(res['lang']);
+      Controller.c.user(res.data);
+      Controller.c.lang(res.data?['lang']);
   }
 }

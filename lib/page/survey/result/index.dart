@@ -77,8 +77,8 @@ class TopBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.symmetric(vertical: 15),
-      margin: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+      padding: const EdgeInsets.symmetric(vertical: 15),
+      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
       decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(50),
           boxShadow: const [
@@ -126,7 +126,7 @@ class DailyIntakeSection extends StatelessWidget {
             Text("DAILY_INTAKE".tr,
                 style:
                     const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
-            SizedBox(
+            const SizedBox(
               height: 10,
             ),
             SizedBox(

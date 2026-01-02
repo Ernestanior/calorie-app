@@ -37,9 +37,9 @@ class _AiCookingPageState extends State<AiCookingPage>
     with TickerProviderStateMixin {
   List<Map<String, dynamic>> _selectedIngredients = [];
   List<int> _selectedCuisines = []; // 改为 int 类型，因为 API 返回的 id 是数字
-  bool _isGenerating = false;
+  final bool _isGenerating = false;
   late String _generatingText;
-  List<Map<String, dynamic>> _recipes = [];
+  final List<Map<String, dynamic>> _recipes = [];
   List<Map<String, dynamic>> _commonIngredients = []; // 常用食材列表
   bool _isLoadingCommonIngredients = false;
   List<Map<String, dynamic>> _cuisines = []; // 从 API 获取的菜系列表
@@ -61,20 +61,21 @@ class _AiCookingPageState extends State<AiCookingPage>
   late Animation<double> _fadeAnimation;
   late Animation<double> _generatingAnimation;
 
-  // 获取食材翻译后的名称
+  // 获取食材名称：直接使用后端返回的 name/displayName，避免因旧翻译资源导致名称与图片错位
   String _getIngredientName(Map<String, dynamic> ingredient) {
-    // 如果有id，使用翻译key
-    if (ingredient['id'] != null) {
-      final id = ingredient['id'];
-      final translationKey = 'ingre_$id';
-      final translatedName = translationKey.tr;
-      // 如果翻译key存在（翻译后的值不等于key本身），则使用翻译
-      if (translatedName != translationKey) {
-        return translatedName;
-      }
+    // index.dart 中我们在构建 _commonIngredients 时已经将
+    // 'name': item['displayName'] ?? item['name']
+    // 写入了本地 map，这里优先读本地的 name
+    final name = ingredient['name']?.toString();
+    if (name != null && name.isNotEmpty) {
+      return name;
     }
-    // 如果没有id或翻译不存在，使用原始name
-    return ingredient['name'] ?? '';
+    // 回退到可能存在的 displayName 字段
+    final displayName = ingredient['displayName']?.toString();
+    if (displayName != null && displayName.isNotEmpty) {
+      return displayName;
+    }
+    return '';
   }
 
 
@@ -122,7 +123,7 @@ class _AiCookingPageState extends State<AiCookingPage>
         final ingredients = content.map<Map<String, dynamic>>((item) {
           return {
             'id': item['id'],
-            'name': item['name'],
+            'name': item['displayName'] ?? item['name'],
             'type': item['type'],
             'imageUrl': item['imageUrl'],
           };
@@ -208,13 +209,13 @@ class _AiCookingPageState extends State<AiCookingPage>
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-        decoration: BoxDecoration(
+        decoration: const BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              const Color.fromARGB(255, 255, 232, 219),
-              const Color.fromARGB(255, 255, 255, 255),
+              Color.fromARGB(255, 255, 232, 219),
+              Color.fromARGB(255, 255, 255, 255),
             ],
           ),
         ),
@@ -456,7 +457,7 @@ class _AiCookingPageState extends State<AiCookingPage>
                           ? ClipRRect(
                               borderRadius: BorderRadius.circular(10),
                               child: Image.network(
-                                '$imgUrl${ingredient['imageUrl']}',
+                                ingredient['imageUrl'],
                                 width: 20,
                                 height: 20,
                                 fit: BoxFit.cover,
@@ -552,12 +553,12 @@ class _AiCookingPageState extends State<AiCookingPage>
   // 构建快捷食材列表
   Widget _buildQuickIngredientsList() {
     if (_isLoadingCommonIngredients) {
-      return SizedBox(
+      return const SizedBox(
         height: 100,
         child: Center(
           child: CircularProgressIndicator(
             valueColor: AlwaysStoppedAnimation<Color>(
-              const Color(0xFFFF6B35),
+              Color(0xFFFF6B35),
             ),
           ),
         ),
@@ -625,12 +626,12 @@ class _AiCookingPageState extends State<AiCookingPage>
                             ? ClipRRect(
                                 borderRadius: BorderRadius.circular(8),
                                 child: Image.network(
-                                  '$imgUrl${ingredient['imageUrl']}',
+                                  ingredient['imageUrl'],
                                   width: 50,
                                   height: 50,
                                   fit: BoxFit.cover,
                                   errorBuilder: (context, error, stackTrace) {
-                                    return Icon(
+                                    return const Icon(
                                       Icons.fastfood,
                                       size: 24,
                                       color: Colors.black54,
@@ -638,7 +639,7 @@ class _AiCookingPageState extends State<AiCookingPage>
                                   },
                                 ),
                               )
-                            : Icon(
+                            : const Icon(
                                 Icons.fastfood,
                                 size: 24,
                                 color: Colors.black54,
@@ -893,7 +894,7 @@ class _AiCookingPageState extends State<AiCookingPage>
           ),
         ),
         const SizedBox(height: 20),
-        ..._recipes.map((recipe) => _buildRecipeCard(recipe)).toList(),
+        ..._recipes.map((recipe) => _buildRecipeCard(recipe)),
       ],
     );
   }
@@ -1221,7 +1222,7 @@ class ParticleFlowPainter extends CustomPainter {
       ..style = PaintingStyle.fill
       ..color = const Color(0xFF6C63FF);
 
-    final particleCount = 5;
+    const particleCount = 5;
     final particleWidth = size.width / particleCount;
 
     for (int i = 0; i < particleCount; i++) {

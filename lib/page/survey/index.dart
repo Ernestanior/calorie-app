@@ -67,7 +67,7 @@ class _MultiStepFormState extends State<MultiStepForm> {
   double initWeight = (Controller.c.user['currentWeight'] == null ||
           Controller.c.user['currentWeight'] == 0)
       ? 70.0
-      : Controller.c.user['currentWeight'];
+      : (Controller.c.user['currentWeight'] as num).toDouble();
 
   int unitType = Controller.c.user['unitType'] ?? 0; // 0为公制，1为英制
   int height =
@@ -77,7 +77,7 @@ class _MultiStepFormState extends State<MultiStepForm> {
   double currentWeight = (Controller.c.user['currentWeight'] == null ||
           Controller.c.user['currentWeight'] == 0)
       ? 70.0
-      : Controller.c.user['currentWeight'];
+      : (Controller.c.user['currentWeight'] as num).toDouble();
 
   int slideIndex = 0; //体重滚轮滑动的格数
 
@@ -340,18 +340,18 @@ class _MultiStepFormState extends State<MultiStepForm> {
                     _currentPage < pages.length - 1 ? _nextPage : _finish,
                 child: _currentPage < pages.length - 1
                     ? Text("NEXT_STEP".tr,
-                        style: TextStyle(
+                        style: const TextStyle(
                             fontSize: 18,
                             color: Colors.white,
                             fontWeight: FontWeight.bold))
                     : Text("START_MAKING_PLAN".tr,
-                        style: TextStyle(
+                        style: const TextStyle(
                             fontSize: 18,
                             color: Colors.white,
                             fontWeight: FontWeight.bold)),
               ),
             ),
-              SizedBox(height: 10,)
+              const SizedBox(height: 10,)
 
           ],
         ),
@@ -378,7 +378,7 @@ class _MultiStepFormState extends State<MultiStepForm> {
               int index = entry.key;
               String option = entry.value['label'];
               IconData icon = entry.value['icon'];
-              Color color = entry.value['color'] ?? Color(0xC5291B30);
+              Color color = entry.value['color'] ?? const Color(0xC5291B30);
               double size = entry.value['size'] ?? 24.0;
               bool isSelected = PageIndex == index;
 

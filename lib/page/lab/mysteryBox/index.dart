@@ -149,7 +149,7 @@ class _RandomEatPageState extends State<RandomEatPage>
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: Color.fromARGB(255, 243, 255, 241),
+      backgroundColor: const Color.fromARGB(255, 243, 255, 241),
       body: Container(
         decoration: const BoxDecoration(
               gradient: LinearGradient(
@@ -202,7 +202,7 @@ class _RandomEatPageState extends State<RandomEatPage>
           style: GoogleFonts.inter(
             fontSize: 22,
             fontWeight: FontWeight.w700,
-            color: theme.colorScheme.onBackground,
+            color: theme.colorScheme.onSurface,
           ),
         ),
         const Spacer(),
@@ -751,7 +751,7 @@ class _RandomEatPageState extends State<RandomEatPage>
                       ),
                       // 装饰星星
                       ...List.generate(2, (index) {
-                        final radius = 70.0;
+                        const radius = 70.0;
                         final x = radius * (index.isEven ? 1 : -1) * 0.6;
                         final y = radius * (index % 3 == 0 ? 1 : -1) * 0.4;
                         return Positioned(
@@ -851,7 +851,7 @@ class _RandomEatPageState extends State<RandomEatPage>
       children: [
         Container(
           width: double.infinity,
-          padding: EdgeInsets.all(20),
+          padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(22),
@@ -916,13 +916,13 @@ class _RandomEatPageState extends State<RandomEatPage>
                         ),
                       ],
                     ),
-                    SizedBox(height: 5),
+                    const SizedBox(height: 5),
                     if (dishes.isNotEmpty) ...[
                       Wrap(
                         spacing: 8,
                         children: dishes
                             .map((dish) => Chip(
-                                  label: Text(dish,style: TextStyle(fontSize: 13),),
+                                  label: Text(dish,style: const TextStyle(fontSize: 13),),
                                   backgroundColor: const Color(0xFFF8F9FD),
                                 ))
                             .toList(),
@@ -1037,15 +1037,18 @@ class _RandomEatPageState extends State<RandomEatPage>
 
     final prompt = _promptController.text.trim();
     try {
-      final resp =
+      final rawResp =
           await yifanRandomMeal(_mealTypeToCode(_selectedMeal), prompt: prompt);
+      final resp = rawResp is ApiResult ? rawResp : null;
+      final data = resp != null
+          ? (resp.ok ? resp.data : null)
+          : (rawResp is Map<String, dynamic> ? rawResp : null);
       if (!mounted) return;
 
-      if (resp == "-1" || resp == null) {
+      if (data == null) {
         throw Exception('Random meal request failed');
       }
 
-      final data = resp as Map<String, dynamic>;
       print('data: $data');
 
       print('dishes: ${data['dishNames']}');
@@ -1088,7 +1091,7 @@ class _RandomEatPageState extends State<RandomEatPage>
   String _resolveImageUrl(String? url) {
     if (url == null || url.isEmpty) return '';
     if (url.startsWith('http')) return url;
-    return '$imgUrl$url';
+    return url;
   }
 
   int _mealTypeToCode(String mealId) {

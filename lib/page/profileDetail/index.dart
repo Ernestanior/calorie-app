@@ -26,11 +26,11 @@ class _ProfileDetailState extends State<ProfileDetail> {
   return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.white,
-        title: Text('PERSONAL_DETAIL'.tr,style: TextStyle(fontWeight: FontWeight.bold,fontSize: 18),),
+        title: Text('PERSONAL_DETAIL'.tr,style: const TextStyle(fontWeight: FontWeight.bold,fontSize: 18),),
       ),
       backgroundColor:Colors.white,
       body:  Container(
-        decoration: BoxDecoration(color: Colors.white),
+        decoration: const BoxDecoration(color: Colors.white),
         padding: const EdgeInsets.symmetric(horizontal: 20),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,

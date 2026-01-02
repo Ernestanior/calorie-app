@@ -55,7 +55,7 @@ class _SurveyPage3State extends State<SurveyPage3> {
                 children: [
                   // 移动的白色方框
                   AnimatedPositioned(
-                    duration: Duration(milliseconds: 100),
+                    duration: const Duration(milliseconds: 100),
                     curve: Curves.easeInOut,
                     left: getLeftPosition(widget.unitType),
                     child: Container(

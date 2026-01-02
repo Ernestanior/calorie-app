@@ -9,6 +9,7 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:social_share/social_share.dart';
 
+String versionCode = 'v1.1.2';
 String formatDate(String isoString) {
   DateTime dateTime = DateTime.parse(isoString).toLocal(); // 转本地时区
   return DateFormat('yyyy-MM-dd HH:mm').format(dateTime); // 格式化

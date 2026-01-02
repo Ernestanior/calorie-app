@@ -27,27 +27,27 @@ class CameraAuthSheet extends StatelessWidget {
                 fontSize: 18,
                 fontWeight: FontWeight.bold),
           ),
-          SizedBox(
+          const SizedBox(
             height: 20,
           ),
           Text(
             'AUTHORIZE_CAMERA_TIP_1'.tr,
-            style: TextStyle(fontWeight: FontWeight.bold),
+            style: const TextStyle(fontWeight: FontWeight.bold),
           ),
-          SizedBox(
+          const SizedBox(
             height: 10,
           ),
           Text(
             'AUTHORIZE_CAMERA_TIP_2'.tr,
-            style: TextStyle(fontWeight: FontWeight.bold),
+            style: const TextStyle(fontWeight: FontWeight.bold),
             textAlign: TextAlign.center,
           ),
-          SizedBox(
+          const SizedBox(
             height: 10,
           ),
           Text(
             'AUTHORIZE_CAMERA_TIP_3'.tr,
-            style: TextStyle(fontWeight: FontWeight.bold),
+            style: const TextStyle(fontWeight: FontWeight.bold),
             textAlign: TextAlign.center,
           ),
           buildCompleteButton(context, 'GO_SETTING'.tr, () {

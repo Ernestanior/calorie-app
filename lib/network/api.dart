@@ -1,4 +1,5 @@
 import 'dart:ui';
+import 'dart:convert';
 
 import 'package:calorie/common/util/deviceId.dart';
 import 'package:calorie/main.dart';
@@ -9,11 +10,12 @@ import 'package:intl/intl.dart';
 
 import '../store/store.dart';
 
-const String baseUrl = 'https://www.xyvnai.com/api';
-const String imgUrl = 'https://www.xyvnai.com';
+// const String baseUrl = 'https://calorie-backend.xyvn.workers.dev/api';
+const String baseUrl = 'https://api.xyvnai.com/api';
+// const String imgUrl = 'http://127.0.0.1:8787';
 
 //  const String baseUrl = 'http://10.10.20.34:9304/api';
-//  const String imgUrl = 'http://10.10.20.34';
+//  const String imgUrl = 'http://10.10.20.34/';
 
 class DioService {
   static final DioService _instance = DioService._internal();
@@ -42,6 +44,83 @@ class DioService {
     // responseHeader: false,
     // error: true,
     // ));
+  }
+
+  /// 标准化的返回结构，便于逐步替换旧的 "-1" 错误判断
+  Future<ApiResult<T>> requestResult<T>(
+    String path,
+    String method, {
+    Map<String, dynamic>? query,
+    dynamic body,
+    Map<String, String>? headers,
+    bool pass = false,
+  }) async {
+    try {
+      // 根据当前用户语言动态设置 locale 头，默认 zh_CN
+      final String localeHeader =
+          (Controller.c.user['lang']?.toString().isNotEmpty ?? false)
+              ? Controller.c.user['lang'].toString()
+              : 'zh_CN';
+
+      final Map<String, String> mergedHeaders = {
+        'app-user-locale': localeHeader,
+        if (headers != null) ...headers,
+      };
+
+      final options = Options(
+        method: method,
+        headers: mergedHeaders,
+        contentType: body is FormData ? 'multipart/form-data' : 'application/json',
+      );
+
+      final response = await _dio.request(
+        path,
+        data: body,
+        queryParameters: query,
+        options: options,
+      );
+
+      if (pass) {
+        // 透传，用于流式等特殊场景
+        return ApiResult.ok(raw: response);
+      }
+
+      final data = response.data;
+
+      if (data is Map && data['code'] != null) {
+        final code = data['code'] as int;
+        if (code == 200) {
+          return ApiResult.ok(data: data['data'] as T?);
+        }
+        return ApiResult.fail(
+          code: code,
+          message: data['message']?.toString(),
+          data: data['data'],
+        );
+      }
+
+      // 未按约定返回
+      return ApiResult.fail(
+        code: -1,
+        message: 'Unexpected response',
+        data: data,
+      );
+    } on DioException catch (e) {
+      final offline = e.type == DioExceptionType.connectionError ||
+          e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.receiveTimeout ||
+          e.type == DioExceptionType.sendTimeout;
+      return ApiResult.fail(
+        code: e.response?.statusCode ?? -1,
+        message: e.message ?? 'NETWORK_ERROR',
+        offline: offline,
+      );
+    } catch (e) {
+      return ApiResult.fail(
+        code: -1,
+        message: e.toString(),
+      );
+    }
   }
 
   Future<dynamic> request(
@@ -90,9 +169,20 @@ class DioService {
       }
     }
     try {
+      // 根据当前用户语言动态设置 locale 头，默认 zh_CN
+      final String localeHeader =
+          (Controller.c.user['lang']?.toString().isNotEmpty ?? false)
+              ? Controller.c.user['lang'].toString()
+              : 'zh_CN';
+
+      final Map<String, String> mergedHeaders = {
+        'app-user-locale': localeHeader,
+        if (headers != null) ...headers,
+      };
+
       final options = Options(
         method: method,
-        headers: headers,
+        headers: mergedHeaders,
         contentType:
             body is FormData ? 'multipart/form-data' : 'application/json',
       );
@@ -133,26 +223,106 @@ class DioService {
   }
 }
 
+class ApiResult<T> {
+  final bool ok;
+  final int code;
+  final T? data;
+  final String? message;
+  final bool offline;
+  final dynamic raw;
+
+  const ApiResult({
+    required this.ok,
+    required this.code,
+    this.data,
+    this.message,
+    this.offline = false,
+    this.raw,
+  });
+
+  factory ApiResult.ok({T? data, dynamic raw}) =>
+      ApiResult(ok: true, code: 200, data: data, raw: raw);
+
+  factory ApiResult.fail({
+    required int code,
+    String? message,
+    bool offline = false,
+    dynamic data,
+  }) =>
+      ApiResult(
+        ok: false,
+        code: code,
+        message: message,
+        offline: offline,
+        data: data,
+      );
+}
+
 // 首次进入app时获取用户信息，若无该用户则新建用户
 Future login(String id, dynamic data) => DioService()
     .request('/user/create', 'put', body: {'deviceId': id, ...data});
+
+// 标准化版本：返回 ApiResult，避免使用 "-1" 哨兵
+Future<ApiResult<Map<String, dynamic>?>> loginResult(String id, dynamic data) =>
+    DioService().requestResult<Map<String, dynamic>?>(
+      '/user/create',
+      'put',
+      body: {'deviceId': id, ...data},
+    );
 
 // 修改用户
 Future userModify(dynamic data) => DioService().request('/user/modify', 'put',
     body: {'id': '${Controller.c.user['id']}', ...data});
 
+Future<ApiResult<Map<String, dynamic>?>> userModifyResult(dynamic data) =>
+    DioService().requestResult<Map<String, dynamic>?>('/user/modify', 'put',
+        body: {'id': '${Controller.c.user['id']}', ...data});
+
 // 获取用户信息
 Future getUserDetail() => DioService().request('/user/detail', 'get',
     query: {'id': '${Controller.c.user['id']}'});
 
+Future<ApiResult<Map<String, dynamic>?>> getUserDetailResult() =>
+    DioService().requestResult<Map<String, dynamic>?>('/user/detail', 'get',
+        query: {'id': '${Controller.c.user['id']}'});
+
 // 删除用户
 Future userDelete() => DioService().request('/user/delete', 'delete',
-    query: {'id': '${Controller.c.user['id']}'});
+    query: {'id': Controller.c.user['id']});
 
-// 饮食建议
-Future getUserDietaryAdvice() =>
-    DioService().request('/user/list/dietary/advice', 'get',
-        query: {'id': '${Controller.c.user['id']}'});
+// 用户每日数据统计
+Future userSummary(String date) => DioService().request('/user-daily-summary/fetch-one', 'put',
+    body: {'userId': Controller.c.user['id'], 'date': date});
+
+Future<ApiResult<Map<String, dynamic>?>> userSummaryResult(String date) =>
+    DioService().requestResult<Map<String, dynamic>?>(
+      '/user-daily-summary/fetch-one',
+      'put',
+      body: {'userId': Controller.c.user['id'], 'date': date},
+    );
+
+// 饮食建议：直接从当前用户数据中读取，无需额外请求
+Future<List<dynamic>> getUserDietaryAdvice() async {
+  final raw = Controller.c.user['dietaryAdviceList'] ??
+      Controller.c.user['dietaryAdvice'];
+
+  if (raw == null) return [];
+
+  if (raw is List) return raw;
+
+  if (raw is String) {
+    try {
+      final decoded = jsonDecode(raw);
+      if (decoded is List) return decoded;
+      if (decoded is String) return [decoded];
+      return [];
+    } catch (_) {
+      return [raw];
+    }
+  }
+
+  return [];
+}
 
 // 目前弃用！ 图片base64
 Future imgRender(dynamic data) =>
@@ -174,13 +344,31 @@ Future openAiReason(Map data) => DioService()
 Future openAiResult(Map data) =>
     DioService().request('/openAI/create-chat', 'put', body: data, pass: true);
 
+// openAi完整内容
+Future openAiPlainChat(Map data) =>
+    DioService().request('/openAI/plainchat', 'put', body: data, pass: true);
+
+Future<ApiResult<dynamic>> openAiPlainChatResult(Map data) =>
+    DioService().requestResult('/openAI/plainchat', 'put', body: data, pass: true);
+
 // 每天的卡路里，碳水，脂肪，蛋白质记录
 Future dailyRecord(int userId, String date) =>
     DioService().request('/detection/count-by-date', 'post', body: {
       'userId': userId,
-      'startDateTime': '${date} 00:00:00',
-      'endDateTime': '${date} 23:59:59'
+      'startDateTime': '$date 00:00:00',
+      'endDateTime': '$date 23:59:59'
     });
+
+Future<ApiResult<Map<String, dynamic>?>> dailyRecordResult(int userId, String date) =>
+    DioService().requestResult<Map<String, dynamic>?>(
+      '/detection/count-by-date',
+      'post',
+      body: {
+        'userId': userId,
+        'startDateTime': '$date 00:00:00',
+        'endDateTime': '$date 23:59:59'
+      },
+    );
 
 // 图片上传获取uri
 Future fileUpload(FormData data) =>
@@ -190,6 +378,16 @@ Future fileUpload(FormData data) =>
 Future detectionCreate(dynamic data) =>
     DioService().request('/detection/create', 'put', body: data);
 
+Future<ApiResult<Map<String, dynamic>?>> detectionCreateResult(dynamic data) =>
+    DioService().requestResult<Map<String, dynamic>?>('/detection/create', 'put', body: data);
+
+// 文本描述创建食物记录
+Future detectionCreateWithText(dynamic data) =>
+    DioService().request('/detection/create-with-text', 'put', body: data);
+
+Future<ApiResult<Map<String, dynamic>?>> detectionCreateWithTextResult(dynamic data) =>
+    DioService().requestResult<Map<String, dynamic>?>('/detection/create-with-text', 'put', body: data);
+
 // 一个月内的打卡记录
 Future detectionForMonth(String startDate, String endDate) => DioService()
         .request('/detection/count-detection-times-by-date', 'post', body: {
@@ -197,6 +395,17 @@ Future detectionForMonth(String startDate, String endDate) => DioService()
       'startDateTime': '$startDate 00:00:00',
       'endDateTime': '$endDate 23:59:59',
     });
+
+Future<ApiResult<Map<String, dynamic>?>> detectionForMonthResult(String startDate, String endDate) =>
+    DioService().requestResult<Map<String, dynamic>?>(
+      '/detection/count-detection-times-by-date',
+      'post',
+      body: {
+        'userId': Controller.c.user['id'],
+        'startDateTime': '$startDate 00:00:00',
+        'endDateTime': '$endDate 23:59:59',
+      },
+    );
 
 // 扫描食物记录
 Future detectionList(int page, int pageSize, {String? date}) {
@@ -219,9 +428,39 @@ Future detectionList(int page, int pageSize, {String? date}) {
         'desc': 1,
         'sort': 'createDate'
       },
-      'startDateTime': '${date} 00:00:00',
-      'endDateTime': '${date} 23:59:59'
+      'startDateTime': '$date 00:00:00',
+      'endDateTime': '$date 23:59:59'
     });
+  }
+}
+
+Future<ApiResult<Map<String, dynamic>?>> detectionListResult(int page, int pageSize, {String? date}) {
+  if (date == null) {
+    return DioService().requestResult<Map<String, dynamic>?>('/detection/page', 'post', body: {
+      'userId': Controller.c.user['id'],
+      'searchPage': {
+        'page': page,
+        'pageSize': pageSize,
+        'desc': 1,
+        'sort': 'createDate'
+      },
+    });
+  } else {
+    return DioService().requestResult<Map<String, dynamic>?>(
+      '/detection/page',
+      'post',
+      body: {
+        'userId': Controller.c.user['id'],
+        'searchPage': {
+          'page': page,
+          'pageSize': pageSize,
+          'desc': 1,
+          'sort': 'createDate'
+        },
+        'startDateTime': '$date 00:00:00',
+        'endDateTime': '$date 23:59:59'
+      },
+    );
   }
 }
 
@@ -274,6 +513,12 @@ Future recipeSetPage() =>
       'searchPage': {'page': 1, 'pageSize': 999, 'desc': 0, 'sort': 'id'}
     });
 
+Future<ApiResult<Map<String, dynamic>?>> recipeSetPageResult() =>
+    DioService().requestResult<Map<String, dynamic>?>('/recipeSet/page', 'post', body: {
+      'visible': 1,
+      'searchPage': {'page': 1, 'pageSize': 999, 'desc': 0, 'sort': 'id'}
+    });
+
 // 用户收藏食谱的集合
 Future recipeSetCollects() =>
     DioService().request('/user/page/recipeSet', 'post', body: {
@@ -281,12 +526,10 @@ Future recipeSetCollects() =>
       'searchPage': {'page': 1, 'pageSize': 999, 'desc': 0, 'sort': 'id'}
     });
 
-// 每一天的三餐菜谱
-Future recipePage(int id, int day) =>
-    DioService().request('/recipe/page', 'post', body: {
+// 整套计划（所有天数与三餐）
+Future recipePlan(int id) =>
+    DioService().request('/recipe/plan', 'get', query: {
       'recipeSetId': id,
-      'day': day,
-      'searchPage': {'page': 1, 'pageSize': 999, 'desc': 0, 'sort': 'id'}
     });
 
 // 苹果订阅验证

@@ -11,14 +11,14 @@ class DiscountDialog extends StatelessWidget {
         borderRadius: BorderRadius.circular(16.0),
       ),
       child: Container(
-        padding: EdgeInsets.symmetric(vertical: 16.0, horizontal: 25),
+        padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 25),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(15),
-          gradient: LinearGradient(
+          gradient: const LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              const Color.fromARGB(255, 255, 243, 226),
+              Color.fromARGB(255, 255, 243, 226),
               Colors.white,
               Colors.white,
               Colors.white,
@@ -33,22 +33,22 @@ class DiscountDialog extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
             Image.asset(
               'assets/image/discount.jpeg',
               width: 136,
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             Text(
               'CONGRATS'.tr,
               textAlign: TextAlign.center,
-              style: TextStyle(
+              style: const TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
                 color: Colors.black87,
               ),
             ),
-            SizedBox(height: 8),
+            const SizedBox(height: 8),
             Text(
               'UNLOCKED_LIMITED_TIME_DISCOUNT'.tr,
               textAlign: TextAlign.center,
@@ -57,13 +57,13 @@ class DiscountDialog extends StatelessWidget {
                 color: Colors.brown[700],
               ),
             ),
-            SizedBox(height: 24),
+            const SizedBox(height: 24),
             ElevatedButton(
               onPressed: () {
                 Navigator.of(context).pop(); // Close dialog
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: Color(0xFFEAC794),
+                backgroundColor: const Color(0xFFEAC794),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(20),
                 ),
@@ -73,7 +73,7 @@ class DiscountDialog extends StatelessWidget {
                 children: [
                   Text(
                     'CLAIM_NOW'.tr,
-                    style: TextStyle(
+                    style: const TextStyle(
                         fontSize: 15,
                         color: Colors.black,
                         fontWeight: FontWeight.bold),

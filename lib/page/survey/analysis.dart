@@ -8,6 +8,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:lottie/lottie.dart';
+import 'package:gpt_markdown/gpt_markdown.dart';
 
 class SurveyAnalysis extends StatefulWidget {
   const SurveyAnalysis({super.key});
@@ -65,9 +66,9 @@ class _SurveyAnalysisState extends State<SurveyAnalysis>
 
   void startAnimations() async {
     _LottieController1.repeat();
-    await Future.delayed(Duration(milliseconds: 400));
+    await Future.delayed(const Duration(milliseconds: 400));
     _LottieController2.repeat();
-    await Future.delayed(Duration(milliseconds: 400));
+    await Future.delayed(const Duration(milliseconds: 400));
     _LottieController3.repeat();
   }
 
@@ -89,7 +90,7 @@ class _SurveyAnalysisState extends State<SurveyAnalysis>
     final dio = Dio();
     try {
       final response = await dio.request(
-        '${baseUrl}/openAI/create-reasoner',
+        '$baseUrl/openAI/create-reasoner',
         data: jsonEncode(data),
         options: Options(
           method: 'PUT',
@@ -108,7 +109,7 @@ class _SurveyAnalysisState extends State<SurveyAnalysis>
         event = event.replaceAll('\n', '').replaceAll('data:', '');
         if (event.isNotEmpty) addNewText(event);
       }, onDone: () {
-        addNewText('\n\n' + "PERSONALIZED_PLAN_IS_READY".tr);
+        addNewText('\n\n${"PERSONALIZED_PLAN_IS_READY".tr}');
         _jumpTo100();
       }, onError: (error) {
         if (!CancelToken.isCancel(error)) {
@@ -276,7 +277,7 @@ class _SurveyAnalysisState extends State<SurveyAnalysis>
       children: [
         Container(
           padding: const EdgeInsets.all(10),
-          margin: EdgeInsets.symmetric(horizontal: 15),
+          margin: const EdgeInsets.symmetric(horizontal: 15),
           height: 530,
           width: double.infinity,
           decoration: BoxDecoration(
@@ -300,8 +301,8 @@ class _SurveyAnalysisState extends State<SurveyAnalysis>
                 AnimatedOpacity(
                   opacity: isTyping ? 0.95 : 1,
                   duration: const Duration(milliseconds: 300),
-                  child: Text(
-                    displayedText,
+                  child: GptMarkdown(
+                    _formatReasonMarkdown(displayedText),
                     style: const TextStyle(
                       fontSize: 14,
                       height: 1.5,
@@ -354,5 +355,26 @@ class _SurveyAnalysisState extends State<SurveyAnalysis>
 
       Navigator.pushNamed(context, '/surveyResult');
     });
+  }
+
+  String _formatReasonMarkdown(String raw) {
+    var text = raw;
+
+    text = text.replaceAll('#### ', '\n\n#### ');
+    text = text.replaceAll('### ', '\n\n### ');
+    text = text.replaceAll('## ', '\n\n## ');
+
+    // Remove leading Markdown heading markers (e.g. #, ##, ###) to avoid
+    // rendering them as large heading fonts in GptMarkdown
+    text = text.replaceAll(RegExp(r'^#{1,6}\s+', multiLine: true), '');
+
+    text = text.replaceAll('\\times', '×');
+    text = text.replaceAll('\\text{ kcal}', 'kcal');
+    text = text.replaceAll('\\text{', '');
+    text = text.replaceAll('}', '');
+    text = text.replaceAll('\\[', '');
+    text = text.replaceAll('\\]', '');
+
+    return text.trim();
   }
 }

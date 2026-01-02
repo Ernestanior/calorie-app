@@ -59,8 +59,8 @@ class StepAuthSheet extends StatelessWidget {
                 initialPage: 0,
                 enableInfiniteScroll: true,
                 autoPlay: true,
-                autoPlayInterval: Duration(seconds: 3),
-                autoPlayAnimationDuration: Duration(milliseconds: 800),
+                autoPlayInterval: const Duration(seconds: 3),
+                autoPlayAnimationDuration: const Duration(milliseconds: 800),
                 autoPlayCurve: Curves.fastOutSlowIn,
               )),
 
@@ -68,13 +68,13 @@ class StepAuthSheet extends StatelessWidget {
                 children: [
                   Text(
                     '·'.tr,
-                    style: TextStyle(fontWeight: FontWeight.bold,fontSize: 30),
+                    style: const TextStyle(fontWeight: FontWeight.bold,fontSize: 30),
                   ),
-                  SizedBox(width: 10,),
+                  const SizedBox(width: 10,),
                   Expanded(child: 
                   Text(
                     'AUTH_TIP_1'.tr,
-                    style: TextStyle(fontWeight: FontWeight.bold),
+                    style: const TextStyle(fontWeight: FontWeight.bold),
                   )
                   ) ,
                 ],
@@ -84,13 +84,13 @@ class StepAuthSheet extends StatelessWidget {
                 children: [
                   Text(
                     '·'.tr,
-                    style: TextStyle(fontWeight: FontWeight.bold,fontSize: 30),
+                    style: const TextStyle(fontWeight: FontWeight.bold,fontSize: 30),
                   ),
-                  SizedBox(width: 10,),
+                  const SizedBox(width: 10,),
                   Expanded(child: 
                   Text(
                     'AUTH_TIP_2'.tr,
-                    style: TextStyle(fontWeight: FontWeight.bold),
+                    style: const TextStyle(fontWeight: FontWeight.bold),
                   )
                   ) ,
                 ],

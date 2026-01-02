@@ -80,97 +80,121 @@ class _ProfileState extends State<Profile>
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topRight,
-              end: Alignment.bottomLeft,
-              colors: [
-                Color.fromARGB(255, 238, 251, 255),
-                Color.fromARGB(255, 255, 250, 250),
-                Color.fromARGB(255, 241, 252, 255)
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topRight,
+            end: Alignment.bottomLeft,
+            colors: [
+              Color.fromARGB(255, 238, 251, 255),
+              Color.fromARGB(255, 255, 250, 250),
+              Color.fromARGB(255, 241, 252, 255)
+            ],
+          ),
+        ),
+        child: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 25),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildHeader(),
+                const SizedBox(height: 15),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    GestureDetector(
+                      onTap: () async {
+                        Navigator.pushNamed(context, '/weight');
+                      },
+                      child: Obx(() {
+                        final currentWeight =
+                            (Controller.c.user['currentWeight'] as num?)
+                                    ?.toDouble() ??
+                                0.0;
+                        final initWeight =
+                            (Controller.c.user['initWeight'] as num?)
+                                    ?.toDouble() ??
+                                0.0;
+                        final targetWeight =
+                            (Controller.c.user['targetWeight'] as num?)
+                                    ?.toDouble() ??
+                                0.0;
+                        final targetType =
+                            Controller.c.user['targetType'] as int? ?? 0;
+
+                        return WeightCard(
+                          currentWeight: currentWeight,
+                          type: targetType,
+                          initWeight: initWeight,
+                          targetWeight: targetWeight,
+                          onAdd: () {
+                            Get.bottomSheet(WeightSheet(
+                              weight: currentWeight,
+                              onChange: () => {},
+                            ));
+                          },
+                          onMore: () {
+                            // 跳转到体重记录页
+                          },
+                        );
+                      }),
+                    ),
+                    GestureDetector(
+                      onTap: () async {
+                        if (stepPermission) {
+                          Navigator.pushNamed(context, '/step');
+                        } else {
+                          await Get.bottomSheet(const StepAuthSheet())
+                              .then((e) {
+                            _stepPermission();
+                          });
+                        }
+                      },
+                      child: Obx(() => StepCard(
+                            todaySteps: todaySteps,
+                            targetSteps:
+                                (Controller.c.user['targetStep'] as num?)
+                                        ?.toInt() ??
+                                    0,
+                            permission: stepPermission,
+                          )),
+                    ),
+                  ],
+                ),
+                _buildBMICircle(),
+                const PremiumCard(),
+                _buildCalorieGoal(),
+                _buildOptionsList(),
+                const SizedBox(height: 60),
               ],
             ),
           ),
-          child: SafeArea(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 25),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildHeader(),
-                  const SizedBox(height: 15),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      GestureDetector(
-                        onTap: () async {
-                          Navigator.pushNamed(context, '/weight');
-                        },
-                        child: Obx(() => WeightCard(
-                              currentWeight: Controller.c.user['currentWeight'],
-                              type: Controller.c.user['targetType'],
-                              initWeight: Controller.c.user['initWeight'],
-                              targetWeight: Controller.c.user['targetWeight'],
-                              onAdd: () {
-                                Get.bottomSheet(WeightSheet(
-                                  weight: Controller.c.user['currentWeight']
-                                      .toDouble(),
-                                  onChange: () => {},
-                                ));
-                                // Get.bottomSheet(StepSheet());
-                              },
-                              onMore: () {
-                                // 跳转到体重记录页
-                              },
-                            )),
-                      ),
-                      GestureDetector(
-                        onTap: () async {
-                          if (stepPermission) {
-                            Navigator.pushNamed(context, '/step');
-                          } else {
-                            // 等待 bottomSheet 关闭并接收返回值
-                            await Get.bottomSheet(const StepAuthSheet())
-                                .then((e) {
-                              _stepPermission();
-                            });
-                          }
-                        },
-                        child: Obx(() => StepCard(
-                              todaySteps: todaySteps,
-                              targetSteps: Controller.c.user['targetStep'],
-                              permission: stepPermission,
-                            )),
-                      ),
-                    ],
-                  ),
-                  _buildBMICircle(),
-                  PremiumCard(),
-                  _buildCalorieGoal(),
-                  _buildOptionsList(),
-                  const SizedBox(
-                    height: 60,
-                  )
-                ],
-              ),
-            ),
-          )),
+        ),
+      ),
     );
   }
 
   Widget _buildHeader() {
-    return Row(children: [
-Text(
-      'MINE'.tr,
-      style: const TextStyle(
-          fontSize: 24, fontWeight: FontWeight.bold, color: Colors.black),
-    ),
-    Text(
-      '${Controller.c.user['id']}',
-      style: const TextStyle(
-          fontSize: 11,  color: Color.fromARGB(255, 157, 157, 157)),
-    )
-    ],) ;
+    return Row(
+      children: [
+        Text(
+          'MINE'.tr,
+          style: const TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+            color: Colors.black,
+          ),
+        ),
+        const SizedBox(width: 8),
+        Text(
+          '${Controller.c.user['id']}',
+          style: const TextStyle(
+            fontSize: 11,
+            color: Color.fromARGB(255, 157, 157, 157),
+          ),
+        ),
+      ],
+    );
   }
 
   List weightList = [
@@ -193,18 +217,26 @@ Text(
             ),
           ],
         ),
-        child: Obx(() => BMICard(
-            bmi: Controller.c.user['unitType'] == 0
-                ? double.parse((Controller.c.user['currentWeight'] /
-                        (Controller.c.user['height'] *
-                            Controller.c.user['height'] /
-                            10000))
-                    .toStringAsFixed(2))
-                : double.parse((Controller.c.user['currentWeight'] /
-                        (Controller.c.user['height'] *
-                            Controller.c.user['height']) *
-                        703)
-                    .toStringAsFixed(2)))));
+        child: Obx(() {
+          final unitType = Controller.c.user['unitType'] as int? ?? 0;
+          final weight = (Controller.c.user['currentWeight'] as num?)?.toDouble() ?? 0.0;
+          final height = (Controller.c.user['height'] as num?)?.toDouble() ?? 0.0;
+
+          double bmi = 0;
+          if (height > 0) {
+            if (unitType == 0) {
+              // 公制：kg / (cm^2 / 10000)
+              bmi = weight / (height * height / 10000);
+            } else {
+              // 英制：lb / in^2 * 703
+              bmi = weight / (height * height) * 703;
+            }
+          }
+
+          return BMICard(
+            bmi: double.parse(bmi.toStringAsFixed(2)),
+          );
+        }));
   }
 
   Widget _buildCalorieGoal() {

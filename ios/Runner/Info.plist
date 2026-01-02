@@ -57,6 +57,12 @@
 	<string>Vita AI needs permission to save your nutrition analysis results and progress charts to your photo library</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Vita AI uses your photo library to let you upload food photos for calorie and nutrition analysis.</string>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>Vita AI needs access to your local network to check connectivity status and enable debugging features.</string>
+	<key>NSBonjourServices</key>
+	<array>
+		<string>_dartobservatory._tcp</string>
+	</array>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 	<key>UILaunchStoryboardName</key>

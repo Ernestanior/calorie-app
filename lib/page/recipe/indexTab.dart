@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class RecipeTabList extends StatefulWidget {
-  const RecipeTabList({Key? key}) : super(key: key);
+  const RecipeTabList({super.key});
 
   @override
   State<RecipeTabList> createState() => _RecipeTabListState();
@@ -70,12 +70,12 @@ class _RecipeTabListState extends State<RecipeTabList> with SingleTickerProvider
                     child: Wrap(
                       spacing: 8,
                       children: subtitle.map<Widget>((tag) => Container(
-                                padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                 decoration: BoxDecoration(
                                   color: const Color.fromARGB(111, 0, 0, 0),
                                   borderRadius: BorderRadius.circular(10),
                                 ),
-                                child: Text(tag, style: TextStyle(fontSize: 12,color: Colors.white)),
+                                child: Text(tag, style: const TextStyle(fontSize: 12,color: Colors.white)),
                               ))
                           .toList(),
                     ),
@@ -94,15 +94,15 @@ class _RecipeTabListState extends State<RecipeTabList> with SingleTickerProvider
 
                 Row(
                   children: [
-                    Icon(Icons.timer, color: Colors.white, size: 14),
+                    const Icon(Icons.timer, color: Colors.white, size: 14),
                     const SizedBox(width: 2),
                     Text(duration, style: const TextStyle(color: Colors.white, fontSize: 12)),
                     const SizedBox(width: 15),
-                    Icon(Icons.local_fire_department, color: Colors.white, size: 14),
+                    const Icon(Icons.local_fire_department, color: Colors.white, size: 14),
                     const SizedBox(width: 2),
                     Text(weightLoss, style: const TextStyle(color: Colors.white, fontSize: 12)),
                     const SizedBox(width: 15),
-                    Icon(Icons.group, color: Colors.white, size: 14),
+                    const Icon(Icons.group, color: Colors.white, size: 14),
                     const SizedBox(width: 2),
                     Text(usedCount, style: const TextStyle(color: Colors.white, fontSize: 12)),
                   ],
@@ -185,7 +185,7 @@ TabBarView(
                   usedCount: '178万人使用过',
                   overlayColor: 0xB5FF8400
                 ),
-                SizedBox(height: 70,)
+                const SizedBox(height: 70,)
               ],
             );
           }).toList(),

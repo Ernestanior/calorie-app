@@ -29,13 +29,13 @@ class _LanguageSelectorState extends State<LanguageSelector> {
           });
           Controller.c.lang(selectedCode.code);
           Get.updateLocale(selectedCode.value);
-          final res = await userModify({
+          final res = await userModifyResult({
             'lang': selectedCode.code,
           });
-          if (res == "-1") {
+          if (!res.ok || res.data == null) {
             return;
           }
-          Controller.c.user(res);
+          Controller.c.user(res.data);
 
           // 这里你可以调用你的多语言设置函数，比如：
           // Get.updateLocale(Locale(selectedCode));
@@ -59,14 +59,14 @@ class _LanguageSelectorState extends State<LanguageSelector> {
           children: [
             Text(
               emoji,
-              style: TextStyle(fontSize: 17),
+              style: const TextStyle(fontSize: 17),
             ),
-            SizedBox(
+            const SizedBox(
               width: 3,
             ),
             Text(
               language,
-              style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
             ),
           ],
         ),

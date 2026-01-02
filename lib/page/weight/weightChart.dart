@@ -6,8 +6,9 @@ import 'package:intl/intl.dart';
 class WeightChart extends StatefulWidget {
   final String unitType;
   final List<dynamic> recordList;
+  final double targetWeight;
 
-  const WeightChart({super.key, required this.unitType,required this.recordList});
+  const WeightChart({super.key, required this.unitType,required this.recordList,required this.targetWeight});
   @override
   _WeightChartState createState() => _WeightChartState();
 }
@@ -35,11 +36,9 @@ class _WeightChartState extends State<WeightChart> {
   //   {'date': 'Jul 7', 'weight': 77},
   // ];
 
-  double targetWeight = 70;
-
+  // 直接按后端返回的 yyyy-MM-dd 字符串解析，保留真实年份
   DateTime parseDate(String str) {
-    final year = DateTime.now().year;
-    return DateFormat('MMM d').parse(str).copyWith(year: year);
+    return DateTime.parse(str);
   }
 
   List get filteredRecords {
@@ -47,27 +46,28 @@ class _WeightChartState extends State<WeightChart> {
     DateTime startDate;
 
     switch (selectedRangeIndex) {
-      case 0:
-        startDate = now.subtract(Duration(days: 3));
+      case 0: // 最近一周
+        startDate = now.subtract(const Duration(days: 7));
         break;
-      case 1:
-        startDate = now.subtract(Duration(days: 15));
+      case 1: // 最近一月（约 30 天）
+        startDate = now.subtract(const Duration(days: 30));
         break;
-      case 2:
-        startDate = now.subtract(Duration(days: 182));
+      case 2: // 最近一年（约 365 天）
+        startDate = now.subtract(const Duration(days: 365));
         break;
       default:
-        startDate = now.subtract(Duration(days: 7));
+        startDate = now.subtract(const Duration(days: 7));
     }
 
     return widget.recordList
         .where((record) {
-          DateTime date = parseDate(record['date']);
-          return date.isAfter(startDate.subtract(Duration(days: 1))) &&
-              date.isBefore(now.add(Duration(days: 4)));
+          final String raw = record['date']?.toString() ?? '';
+          if (raw.isEmpty) return false;
+          DateTime date = parseDate(raw);
+          return !date.isBefore(startDate) && !date.isAfter(now);
         })
         .toList()
-      ..sort((a, b) => parseDate(a['date']).compareTo(parseDate(b['date'])));
+      ..sort((a, b) => parseDate(a['date'].toString()).compareTo(parseDate(b['date'].toString())));
   }
 
   @override
@@ -79,7 +79,7 @@ class _WeightChartState extends State<WeightChart> {
         padding: const EdgeInsets.all(16),
         child: Text(
           'NO_RECORDS'.tr,
-          style: TextStyle(fontSize: 14, color: Colors.grey),
+          style: const TextStyle(fontSize: 14, color: Colors.grey),
         ),
       );
     }
@@ -89,11 +89,14 @@ class _WeightChartState extends State<WeightChart> {
     final labels = <int, String>{};
 
     for (int i = 0; i < data.length; i++) {
+      final String raw = data[i]['date']?.toString() ?? '';
+      final DateTime dt = parseDate(raw);
       spots.add(FlSpot(i.toDouble(), (data[i]['weight'] as num).toDouble()));
-      labels[i] = data[i]['date'];
+      // X 轴展示简短的月份+日期，如 "Jan 2"
+      labels[i] = DateFormat('MMM d', 'en_US').format(dt);
     }
-    double minY = [...spots.map((e) => e.y), targetWeight].reduce((a, b) => a < b ? a : b);
-    double maxY = [...spots.map((e) => e.y), targetWeight].reduce((a, b) => a > b ? a : b);
+    double minY = [...spots.map((e) => e.y), widget.targetWeight].reduce((a, b) => a < b ? a : b);
+    double maxY = [...spots.map((e) => e.y), widget.targetWeight].reduce((a, b) => a > b ? a : b);
     double yRange = (maxY - minY) ==0?1:(maxY - minY) ;
     minY = (minY - yRange * 0.1).floorToDouble();
     maxY = (maxY + yRange * 0.1).ceilToDouble();
@@ -167,19 +170,19 @@ class _WeightChartState extends State<WeightChart> {
                         spots.isNotEmpty ? (spots.length - 1).toDouble() : 1,
                     minY: minY,
                     maxY: maxY,
-                    gridData: FlGridData(show: false), // 不显示辅助线
+                    gridData: const FlGridData(show: false), // 不显示辅助线
                     extraLinesData: ExtraLinesData(
                       horizontalLines: [
                         HorizontalLine(
-                          y: targetWeight,
+                          y: widget.targetWeight,
                           color: const Color.fromARGB(255, 7, 228, 18),
                           strokeWidth: 2,
                           dashArray: [3],
                           label: HorizontalLineLabel(
                             show: true,
                             alignment: Alignment.topRight,
-                            style: TextStyle(
-                                color: const Color.fromARGB(255, 0, 218, 47),
+                            style: const TextStyle(
+                                color: Color.fromARGB(255, 0, 218, 47),
                                 fontSize: 10,
                                 fontWeight: FontWeight.w600),
                             labelResolver: (_) => 'TARGET_WEIGHT'.tr,
@@ -210,7 +213,7 @@ class _WeightChartState extends State<WeightChart> {
                           (barData, spotIndexes) {
                         return spotIndexes.map((index) {
                           return TouchedSpotIndicatorData(
-                            FlLine(color: Colors.blue, strokeWidth: 1,dashArray:[3]),
+                            const FlLine(color: Colors.blue, strokeWidth: 1,dashArray:[3]),
                             FlDotData(
                               show: true,
                               getDotPainter: (spot, percent, barData, index) =>
@@ -236,7 +239,7 @@ class _WeightChartState extends State<WeightChart> {
                                 padding: const EdgeInsets.only(top: 6), // ✅ 向下偏移
                                 child: Text(
                                   labels[value.toInt()] ?? '',
-                                  style: TextStyle(fontSize: 10),
+                                  style: const TextStyle(fontSize: 10),
                                 ),
                               );
                             }
@@ -250,14 +253,14 @@ class _WeightChartState extends State<WeightChart> {
                           interval: intervalY,
                           getTitlesWidget: (value, _) => Text(
                             value.toStringAsFixed(0),
-                            style: TextStyle(fontSize: 10), // Y轴字体变小
+                            style: const TextStyle(fontSize: 10), // Y轴字体变小
                           ),
                         ),
                       ),
-                      rightTitles: AxisTitles(
+                      rightTitles: const AxisTitles(
                         sideTitles: SideTitles(showTitles: false),
                       ),
-                      topTitles: AxisTitles(
+                      topTitles: const AxisTitles(
                         sideTitles: SideTitles(showTitles: false),
                       ),
                     ),

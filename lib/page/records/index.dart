@@ -1,4 +1,3 @@
-import 'dart:collection';
 import 'package:calorie/common/icon/index.dart';
 import 'package:calorie/common/util/constants.dart';
 import 'package:calorie/main.dart';
@@ -24,7 +23,7 @@ class _RecordsState extends State<Records>
   final int pageSize = 8;
   final ScrollController _scrollController = ScrollController();
 
-  final Map<String, List<dynamic>> groupedRecords = LinkedHashMap();
+  final Map<String, List<dynamic>> groupedRecords = {};
   final Map<String, bool> sectionExpanded = {
     'TODAY': true,
     'LAST_7_DAYS': true,
@@ -83,18 +82,18 @@ class _RecordsState extends State<Records>
     }
 
     try {
-      final res = await detectionList(page, pageSize);
+      final res = await detectionListResult(page, pageSize);
       print(res);
-      if (res == "-1") {
+      if (!res.ok || res.data == null) {
         isLoading = false;
         if (mounted) setState(() {});
         return;
       }
       
       // 安全地获取分页信息
-      final int totalPage = res?['totalPages'] ?? 0;
-      final int currentPage = res?['number'] ?? 0;
-      final List<dynamic> fetched = res?['content'] ?? [];
+      final int totalPage = res.data?['totalPages'] ?? 0;
+      final int currentPage = res.data?['number'] ?? 0;
+      final List<dynamic> fetched = res.data?['content'] ?? [];
 
       if (totalPage <= currentPage + 1) isLastPage = true;
 
@@ -157,7 +156,7 @@ class _RecordsState extends State<Records>
       appBar: AppBar(
         title: Text(
           'MEAL_RECORDS'.tr,
-          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
         ),
         leading: const BackButton(),
       ),
@@ -214,7 +213,7 @@ class _RecordsState extends State<Records>
             sectionExpanded[key] = !expanded;
           }),
         ),
-        if (expanded) ...items.map((item) => buildRecordCard(item)).toList(),
+        if (expanded) ...items.map((item) => buildRecordCard(item)),
       ],
     );
   }

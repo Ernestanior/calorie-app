@@ -207,7 +207,7 @@ class _StarRatingDialogState extends State<StarRatingDialog>
                             ),
                             child: Text(
                               'RATE_NOW'.tr,
-                              style: TextStyle(
+                              style: const TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w600,
                                   color: Colors.white),

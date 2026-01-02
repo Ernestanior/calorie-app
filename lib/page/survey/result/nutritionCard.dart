@@ -8,7 +8,7 @@ class NutritionCard extends StatelessWidget {
   final double percentage;
   final Color color;
 
-  const NutritionCard({
+  const NutritionCard({super.key, 
     required this.title,
     required this.unit,
     required this.total,
@@ -42,7 +42,7 @@ class NutritionCard extends StatelessWidget {
                       Positioned.fill(
                         child: Column(
                             children: [
-                              SizedBox(height: 15,),
+                              const SizedBox(height: 15,),
                               Text(
                                 '$total',
                                 style: const TextStyle(

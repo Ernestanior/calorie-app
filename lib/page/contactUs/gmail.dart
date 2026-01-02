@@ -42,7 +42,7 @@ class MailButton extends StatelessWidget {
       icon: const Icon(Icons.email, color: Colors.black,size: 36,),
       onPressed: _sendEmail,
     ),
-    Text('ern@xyvnai.com',style: TextStyle(fontSize: 16),)
+    const Text('ern@xyvnai.com',style: TextStyle(fontSize: 16),)
           ],
         ))
     

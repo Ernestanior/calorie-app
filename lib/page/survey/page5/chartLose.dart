@@ -82,7 +82,7 @@ class _WeightGoalChartLoseState extends State<WeightGoalChartLose> {
             child:Container(
               padding: const EdgeInsets.symmetric(vertical: 3,horizontal: 10),
               decoration: BoxDecoration(color: const Color.fromARGB(255, 252, 138, 130),borderRadius: BorderRadius.circular(20)),
-              child: Text('${widget.displayCurrent} ${widget.unit}',style: TextStyle(color: Colors.white,fontSize: 12),),
+              child: Text('${widget.displayCurrent} ${widget.unit}',style: const TextStyle(color: Colors.white,fontSize: 12),),
             ),
           ),
           Positioned(

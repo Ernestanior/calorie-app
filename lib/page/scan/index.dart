@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
 
 class ScanAnimationPage extends StatefulWidget {
+  const ScanAnimationPage({super.key});
+
   @override
   _ScanAnimationPageState createState() => _ScanAnimationPageState();
 }
@@ -102,7 +104,7 @@ class _ScanAnimationPageState extends State<ScanAnimationPage>
           ],
         ),
         Transform.translate(
-          offset: Offset(0, -15), // 向上移动 50 像素
+          offset: const Offset(0, -15), // 向上移动 50 像素
           child: Container(
             width: double.infinity,
             padding:const EdgeInsets.only(top: 0,bottom: 20, left: 20, right: 20, ),
@@ -139,9 +141,9 @@ class _ScanAnimationPageState extends State<ScanAnimationPage>
               ],
             ),
           ),
-          SizedBox(height: 20,),
+          const SizedBox(height: 20,),
           Container(
-            padding: EdgeInsets.symmetric(horizontal: 40),
+            padding: const EdgeInsets.symmetric(horizontal: 40),
             child: LinearProgressIndicator(minHeight: 12,borderRadius:BorderRadius.circular(6)),
           )
 
@@ -182,7 +184,7 @@ class CoolScanPainter extends CustomPainter {
 
     final blurPaint = Paint()
       ..color = Colors.blue.withOpacity(0.3)
-      ..maskFilter = MaskFilter.blur(BlurStyle.normal, 50);
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 50);
 
     final glowRect = Rect.fromLTWH(0, size.height * position, size.width, 30);
     canvas.drawRect(glowRect, blurPaint);
@@ -207,7 +209,7 @@ class CoolScanPainter extends CustomPainter {
             Colors.cyan.withOpacity(trailOpacity),
             Colors.blue.withOpacity(0.0)
           ],
-          stops: [0.2, 0.5, 0.8],
+          stops: const [0.2, 0.5, 0.8],
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
         ).createShader(Rect.fromLTWH(0, size.height * (position - (i * 0.01)), size.width, 30));

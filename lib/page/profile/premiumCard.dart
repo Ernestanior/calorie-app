@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 class PremiumCard extends StatefulWidget {
+  const PremiumCard({super.key});
+
   @override
   _PremiumCardState createState() => _PremiumCardState();
 }

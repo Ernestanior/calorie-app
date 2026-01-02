@@ -153,8 +153,8 @@ class SemiArcPainter extends CustomPainter {
     final radius = size.width / 2;
 
     final rect = Rect.fromCircle(center: center, radius: radius);
-    final startAngle = pi * 1.15;
-    final sweepAngle = pi * 0.7;
+    const startAngle = pi * 1.15;
+    const sweepAngle = pi * 0.7;
 
     // 背景半圆
     canvas.drawArc(rect, startAngle, sweepAngle, false, backgroundPaint);

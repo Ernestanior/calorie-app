@@ -32,12 +32,12 @@ class _ScanResultState extends State<ScanResult> {
   Widget build(BuildContext context) {
     double screenHeight = MediaQuery.of(context).size.height;
 
-    Widget _buildMealHeader() {
+    Widget buildMealHeader() {
       final meal = mealInfoMap[_selectedMeal];
       return Row(
         children: [
           Text(_dishName,
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
           const SizedBox(
             width: 8,
           ),
@@ -62,7 +62,7 @@ class _ScanResultState extends State<ScanResult> {
                     Text(meal?['label'] ?? 'DINNER'.tr,
                         style:
                             const TextStyle(color: Colors.white, fontSize: 12)),
-                    SizedBox(
+                    const SizedBox(
                       width: 5,
                     ),
                     const Icon(Icons.edit,
@@ -74,7 +74,7 @@ class _ScanResultState extends State<ScanResult> {
       );
     }
 
-    Widget _buildPanelContent(ScrollController controller) {
+    Widget buildPanelContent(ScrollController controller) {
       return Container(
           padding: const EdgeInsets.only(top: 10),
           child: SingleChildScrollView(
@@ -83,7 +83,7 @@ class _ScanResultState extends State<ScanResult> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildMealHeader(),
+                buildMealHeader(),
                 const SizedBox(height: 10),
                 _buildNutritionStats(),
                 const SizedBox(height: 30),
@@ -131,7 +131,7 @@ class _ScanResultState extends State<ScanResult> {
             borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
             minHeight: 230, // 初始展开高度可调整
             maxHeight: screenHeight * 0.8,
-            panelBuilder: (ScrollController sc) => _buildPanelContent(sc),
+            panelBuilder: (ScrollController sc) => buildPanelContent(sc),
             body: const SizedBox(), // 可忽略
           ),
         ],
@@ -146,10 +146,10 @@ class _ScanResultState extends State<ScanResult> {
         Row(
           children: [
             const Icon(Icons.local_fire_department, color: Colors.red),
-            SizedBox(width: 6),
+            const SizedBox(width: 6),
             Text(
                 "${Controller.c.scanResult['detectionResultData']['total']['calories']} kcal",
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
           ],
         ),
         const SizedBox(height: 10),
@@ -203,7 +203,7 @@ class _ScanResultState extends State<ScanResult> {
           const SizedBox(height: 4),
           Text(name, style: const TextStyle(fontSize: 12)),
           const SizedBox(height: 2),
-          Text('${value}', style: const TextStyle(fontWeight: FontWeight.bold)),
+          Text('$value', style: const TextStyle(fontWeight: FontWeight.bold)),
         ],
       ),
     );
@@ -217,7 +217,7 @@ class _ScanResultState extends State<ScanResult> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text("FOOD_KCAL".tr,
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
         const SizedBox(height: 20),
         Wrap(
           alignment: WrapAlignment.start,
@@ -267,7 +267,7 @@ class _ScanResultState extends State<ScanResult> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text("NUTRITIONAL_VALUE".tr,
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
         const SizedBox(height: 20),
         Wrap(
           alignment: WrapAlignment.start,
@@ -327,13 +327,13 @@ class _ScanResultState extends State<ScanResult> {
       ),
       builder: (context) {
         return Padding(
-            padding: EdgeInsets.all(20),
+            padding: const EdgeInsets.all(20),
             child: GridView.count(
               crossAxisCount: 2,
               crossAxisSpacing: 16,
               mainAxisSpacing: 16,
               shrinkWrap: true, // 不滚动，内容多少就显示多少
-              physics: NeverScrollableScrollPhysics(), // 禁止滚动
+              physics: const NeverScrollableScrollPhysics(), // 禁止滚动
               childAspectRatio:
                   (MediaQuery.of(context).size.width / 2 - 24) / 50, // 控制每项宽高比
               children: mealOptions().map((meal) {
@@ -382,7 +382,7 @@ class _ScanResultState extends State<ScanResult> {
   }
 
   void _showEditDishNameModal(BuildContext context) {
-    final TextEditingController _controller = TextEditingController(
+    final TextEditingController controller = TextEditingController(
       text: _dishName,
     );
 
@@ -405,7 +405,7 @@ class _ScanResultState extends State<ScanResult> {
             mainAxisSize: MainAxisSize.min,
             children: [
               TextField(
-                controller: _controller,
+                controller: controller,
                 autofocus: true,
                 textInputAction: TextInputAction.done,
                 onSubmitted: (value) async {

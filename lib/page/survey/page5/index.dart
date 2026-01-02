@@ -59,8 +59,8 @@ class _SurveyPage5State extends State<SurveyPage5> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('TODAY'.tr,style: TextStyle(color:Color.fromARGB(255, 111, 111, 111)),),
-              Text('NUMBER_OF_WEEKS'.trParams({'number':'$weeks'}),style: TextStyle(color:Color.fromARGB(255, 111, 111, 111)),)
+              Text('TODAY'.tr,style: const TextStyle(color:Color.fromARGB(255, 111, 111, 111)),),
+              Text('NUMBER_OF_WEEKS'.trParams({'number':'$weeks'}),style: const TextStyle(color:Color.fromARGB(255, 111, 111, 111)),)
             ],
            ),
           const SizedBox(height: 10),
@@ -95,9 +95,9 @@ class _SurveyPage5State extends State<SurveyPage5> {
             Center(
               child: 
               Container(
-                padding: EdgeInsets.symmetric(horizontal: 30,vertical: 10),
+                padding: const EdgeInsets.symmetric(horizontal: 30,vertical: 10),
                 decoration: BoxDecoration(color: const Color.fromARGB(255, 237, 240, 250),borderRadius: BorderRadius.circular(50)),
-                child:Text("WEEKLY_GOAL_TIME".trParams({'week':'$weeks'}),style: TextStyle(fontSize: 14),),
+                child:Text("WEEKLY_GOAL_TIME".trParams({'week':'$weeks'}),style: const TextStyle(fontSize: 14),),
            ) )
             ],
         ),);

@@ -1,8 +1,11 @@
+import 'dart:convert';
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:calorie/common/util/constants.dart';
 import 'package:calorie/main.dart';
 import 'package:calorie/network/api.dart';
 import 'package:calorie/store/store.dart';
+import 'package:calorie/components/lottieFood/index.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:shimmer/shimmer.dart';
@@ -80,7 +83,12 @@ class _RecipeCollectState extends State<RecipeCollect>
             decoration:
                 const BoxDecoration(color: Color.fromARGB(255, 249, 248, 255)),
             child: _isLoading
-            ? const Center(child: CircularProgressIndicator()) // 👈 加载中占位
+            ? const Center(
+                child: LottieFood(
+                  size: 60,
+                  spacing: 15,
+                ),
+              )
             :recipeSets.isEmpty
                 ? buildEmptyState(context)
                 : ListView(
@@ -89,12 +97,13 @@ class _RecipeCollectState extends State<RecipeCollect>
                       ...recipeSets.map(
                         (item) => buildCard(
                             context: context,
-                            imageUrl: imgUrl + item['previewPhoto'],
+                            imageUrl: item['previewPhoto'],
                             id: item['id'],
                             name: item['name'],
                             nameEn: item['nameEn'],
-                            labelList: item['labelList'],
-                            labelEnList: item['labelEnList'],
+                            // 适配新后端：label / labelEn 为 JSON 字符串，这里统一解析为 List
+                            labelList: parseLabel(item['label']),
+                            labelEnList: parseLabel(item['labelEn']),
                             type: item['type'],
                             day: item['day'],
                             weight: item['weight'],
@@ -107,6 +116,25 @@ class _RecipeCollectState extends State<RecipeCollect>
                     ],
                   )));
   }
+}
+
+/// 将后端返回的 label / labelEn 字段安全转换为 List
+/// 支持三种情况：
+/// - null => []
+/// - 已经是 List => 原样返回
+/// - String（JSON 数组）=> 尝试 jsonDecode 成 List
+List<dynamic> parseLabel(dynamic raw) {
+  if (raw == null) return [];
+  if (raw is List) return raw;
+  if (raw is String) {
+    try {
+      final decoded = jsonDecode(raw);
+      if (decoded is List) return decoded;
+    } catch (_) {
+      // ignore parse error, fallback to empty list
+    }
+  }
+  return [];
 }
 
   Widget buildEmptyState(BuildContext context) {
@@ -133,7 +161,7 @@ class _RecipeCollectState extends State<RecipeCollect>
               width: 150,
               padding: const EdgeInsets.symmetric(vertical: 8),
               decoration: BoxDecoration(
-                color: Color.fromARGB(255, 34, 32, 30),
+                color: const Color.fromARGB(255, 34, 32, 30),
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Text(
@@ -178,7 +206,7 @@ Widget buildCard({
   String displayDay = '$day ${'DAY'.tr}';
   String displayHot = '$hot ${'HOT_UNIT'.tr}';
   return GestureDetector(
-    onTap: () => Get.to(() => RecipeDetail(), arguments: {
+    onTap: () => Get.to(() => const RecipeDetail(), arguments: {
       'id': id,
       'name': displayName,
       'imageUrl': imageUrl,

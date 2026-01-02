@@ -2,7 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 class ImageSwitcher extends StatefulWidget {
-  const ImageSwitcher({Key? key}) : super(key: key);
+  const ImageSwitcher({super.key});
 
   @override
   _ImageSwitcherState createState() => _ImageSwitcherState();

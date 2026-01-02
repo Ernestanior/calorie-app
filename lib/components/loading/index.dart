@@ -6,10 +6,10 @@ class LottieLoading extends StatefulWidget {
   final double spacing;
 
   const LottieLoading({
-    Key? key,
+    super.key,
     this.size = 30,
     this.spacing = 25,
-  }) : super(key: key);
+  });
 
   @override
   State<LottieLoading> createState() => _LottieLoadingState();
@@ -24,10 +24,10 @@ class _LottieLoadingState extends State<LottieLoading>
   void startAnimations() async {
     if (!mounted) return;
     _LottieController1.repeat();
-    await Future.delayed(Duration(milliseconds: 300));
+    await Future.delayed(const Duration(milliseconds: 300));
     if (!mounted) return;
     _LottieController2.repeat();
-    await Future.delayed(Duration(milliseconds: 300));
+    await Future.delayed(const Duration(milliseconds: 300));
     if (!mounted) return;
     _LottieController3.repeat();
   }
@@ -66,7 +66,7 @@ class _LottieLoadingState extends State<LottieLoading>
                   borderRadius: BorderRadius.circular(10),
                   color: Colors.black.withOpacity(0.4),
                 ),
-                padding: EdgeInsets.all(25),
+                padding: const EdgeInsets.all(25),
                 child: Center(
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.start,

@@ -59,13 +59,13 @@ class _LabPageState extends State<LabPage> with TickerProviderStateMixin {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-        decoration: BoxDecoration(
+        decoration: const BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
               Colors.white,
-              const Color(0xFFF7F7FA),
+              Color(0xFFF7F7FA),
             ],
           ),
         ),
@@ -251,9 +251,9 @@ class _LabPageState extends State<LabPage> with TickerProviderStateMixin {
         _buildFeatureCard(
           title: 'SMART_COOKING'.tr,
           description: 'SMART_RECIPE_1'.tr,
-          icon: Icon(
+          icon: const Icon(
             AliIcon.food1,
-            color: const Color.fromARGB(255, 207, 88, 3),
+            color: Color.fromARGB(255, 207, 88, 3),
             size: 40,
           ),
           gradientColors: [
@@ -273,9 +273,9 @@ class _LabPageState extends State<LabPage> with TickerProviderStateMixin {
         _buildFeatureCard(
           title: 'MYSTERY_BOX_TITLE'.tr,
           description: 'MYSTERY_MEAL_1'.tr,
-          icon:  Icon(
+          icon:  const Icon(
             AliIcon.food2,
-            color: const Color.fromARGB(255, 27, 164, 0),
+            color: Color.fromARGB(255, 27, 164, 0),
             size: 40,
           ),
           gradientColors: [
@@ -464,7 +464,7 @@ class _FeatureCardState extends State<_FeatureCard>
                               color: Colors.white.withOpacity(0.85),
                               shape: BoxShape.circle,
                               border: Border.all(
-                                color: Color(0xFFEAEAF0),
+                                color: const Color(0xFFEAEAF0),
                                 width: 2,
                               ),
                             ),
@@ -751,7 +751,7 @@ class _FloatingIconState extends State<_FloatingIcon>
         // 使用正弦波实现平滑的上下浮动
         // _floatAnimation.value 从 0 到 1，通过 sin 转换为 -1 到 1 的循环
         final floatValue = (_floatAnimation.value * 2 - 1) * math.pi;
-        final baseFloatOffset = 12.0; // 基础浮动范围 ±12 像素
+        const baseFloatOffset = 12.0; // 基础浮动范围 ±12 像素
         final floatOffset = math.sin(floatValue) * baseFloatOffset * widget.floatAmplitude;
         
         return Transform.translate(

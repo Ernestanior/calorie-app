@@ -51,8 +51,8 @@ class _WeightGoalChartGainState extends State<WeightGoalChartGain> {
                 ).createShader(bounds);
               },
               child: SfCartesianChart(
-              primaryXAxis: NumericAxis(isVisible: false), // 隐藏 X 轴
-              primaryYAxis: NumericAxis(isVisible: false, minimum: 0, maximum: 100), // 隐藏 Y 轴
+              primaryXAxis: const NumericAxis(isVisible: false), // 隐藏 X 轴
+              primaryYAxis: const NumericAxis(isVisible: false, minimum: 0, maximum: 100), // 隐藏 Y 轴
 
               series: [
                 /// SplineSeries 生成平滑曲线
@@ -80,7 +80,7 @@ class _WeightGoalChartGainState extends State<WeightGoalChartGain> {
                 child:Container(
                   padding: const EdgeInsets.symmetric(vertical: 3,horizontal: 10),
                   decoration: BoxDecoration(color: const Color.fromARGB(255, 252, 138, 130),borderRadius: BorderRadius.circular(20)),
-                  child: Text('${widget.displayCurrent} ${widget.unit}',style: TextStyle(color: Colors.white,fontSize: 12),),
+                  child: Text('${widget.displayCurrent} ${widget.unit}',style: const TextStyle(color: Colors.white,fontSize: 12),),
                 ),
               ),
               Positioned(
@@ -105,7 +105,7 @@ class _WeightGoalChartGainState extends State<WeightGoalChartGain> {
                 child:Container(
                   padding: const EdgeInsets.symmetric(vertical: 3,horizontal: 10),
                   decoration: BoxDecoration(color: const Color.fromARGB(255, 79, 181, 255),borderRadius: BorderRadius.circular(20)),
-                  child: Text('${widget.displayTarget} ${widget.unit}',style: TextStyle(color: Colors.white,fontSize: 12),),
+                  child: Text('${widget.displayTarget} ${widget.unit}',style: const TextStyle(color: Colors.white,fontSize: 12),),
                 ),
               ),
               Positioned(

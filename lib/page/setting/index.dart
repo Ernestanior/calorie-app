@@ -1,5 +1,6 @@
 // import 'dart:html';
 import 'package:calorie/common/icon/index.dart';
+import 'package:calorie/common/util/utils.dart';
 import 'package:calorie/components/actionSheets/deleteAccount.dart';
 import 'package:calorie/components/dialog/language.dart';
 import 'package:calorie/network/api.dart';
@@ -54,14 +55,14 @@ class _SettingState extends State<Setting> {
                       Get.updateLocale(selectedCode.value);
                       Controller.c.lang(selectedCode.code);
 
-                      final res = await userModify({
+                      final res = await userModifyResult({
                         'lang': selectedCode.code,
                       });
-                      if (res == "-1") {
+                      if (!res.ok || res.data == null) {
                         return;
                       }
                       print('modify $res');
-                      Controller.c.user(res);
+                      Controller.c.user(res.data);
                       // 这里你可以调用你的多语言设置函数，比如：
                       // Get.updateLocale(Locale(selectedCode));
                     });
@@ -109,9 +110,9 @@ class _SettingState extends State<Setting> {
                 const SizedBox(
                   width: 20,
                 ),
-                const Text(
-                  'v1.1.1',
-                  style: TextStyle(
+                Text(
+                  versionCode,
+                  style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
                   ),

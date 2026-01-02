@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:get/get_utils/get_utils.dart';
 import 'package:lottie/lottie.dart';
 
 class ActivatingDialog extends StatefulWidget {
   const ActivatingDialog({
-    Key? key,
-  }) : super(key: key);
+    super.key,
+  });
 
   @override
   State<ActivatingDialog> createState() => _ActivatingDialogState();
@@ -21,10 +20,10 @@ class _ActivatingDialogState extends State<ActivatingDialog>
   void startAnimations() async {
     if (!mounted) return;
     _LottieController1.repeat();
-    await Future.delayed(Duration(milliseconds: 300));
+    await Future.delayed(const Duration(milliseconds: 300));
     if (!mounted) return;
     _LottieController2.repeat();
-    await Future.delayed(Duration(milliseconds: 300));
+    await Future.delayed(const Duration(milliseconds: 300));
     if (!mounted) return;
     _LottieController3.repeat();
   }
@@ -56,14 +55,14 @@ class _ActivatingDialogState extends State<ActivatingDialog>
         borderRadius: BorderRadius.circular(16.0),
       ),
       child: Container(
-        padding: EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(16.0),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(15),
-          gradient: LinearGradient(
+          gradient: const LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              const Color.fromARGB(255, 255, 243, 226),
+              Color.fromARGB(255, 255, 243, 226),
               Colors.white,
               Colors.white,
               Colors.white,
@@ -75,22 +74,22 @@ class _ActivatingDialogState extends State<ActivatingDialog>
           ),
         ),
         child: Column(mainAxisSize: MainAxisSize.min, children: [
-          SizedBox(height: 16),
+          const SizedBox(height: 16),
           Image.asset(
             'assets/image/activate.png',
             width: 90,
           ),
-          SizedBox(height: 16),
+          const SizedBox(height: 16),
           Text(
             'SUBSCRIPTION_SUCCESSFUL'.tr,
             textAlign: TextAlign.center,
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
               color: Colors.black87,
             ),
           ),
-          SizedBox(height: 8),
+          const SizedBox(height: 8),
           Text(
             'ACTIVATING_YOUR_MEMBERSHIP'.tr,
             textAlign: TextAlign.center,
@@ -99,7 +98,7 @@ class _ActivatingDialogState extends State<ActivatingDialog>
               color: Colors.brown[700],
             ),
           ),
-          SizedBox(height: 24),
+          const SizedBox(height: 24),
           Container(
             child: Center(
               child: Container(
@@ -107,7 +106,7 @@ class _ActivatingDialogState extends State<ActivatingDialog>
                 height: 55,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(100),
-                  color: Color.fromARGB(255, 201, 161, 109),
+                  color: const Color.fromARGB(255, 201, 161, 109),
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -117,13 +116,13 @@ class _ActivatingDialogState extends State<ActivatingDialog>
                       controller: _LottieController1,
                       width: 25,
                     ),
-                    SizedBox(width: 20),
+                    const SizedBox(width: 20),
                     Lottie.asset(
                       'assets/image/beef_2.json',
                       controller: _LottieController2,
                       width: 25,
                     ),
-                    SizedBox(width: 20),
+                    const SizedBox(width: 20),
                     Lottie.asset(
                       'assets/image/egg_2.json',
                       controller: _LottieController3,

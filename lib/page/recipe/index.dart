@@ -1,7 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:calorie/common/icon/index.dart';
 import 'package:calorie/common/util/constants.dart';
-import 'package:calorie/network/api.dart';
 import 'package:calorie/store/receiptController.dart';
 import 'package:calorie/store/store.dart';
 import 'package:flutter/material.dart';
@@ -12,7 +11,7 @@ import 'package:shimmer/shimmer.dart';
 import 'detail/index.dart';
 
 class RecipePage extends StatefulWidget {
-  const RecipePage({Key? key}) : super(key: key);
+  const RecipePage({super.key});
 
   @override
   State<RecipePage> createState() => _RecipePageState();
@@ -188,12 +187,14 @@ class _RecipePageState extends State<RecipePage>
                             final item = RecipeController.r.recipeSets[index];
                             return buildCard(
                               context: context,
-                              imageUrl: imgUrl + item['previewPhoto'],
+                              imageUrl: item['previewPhoto'],
                               id: item['id'],
                               name: item['name'],
                               nameEn: item['nameEn'],
-                              labelList: item['labelList'],
-                              labelEnList: item['labelEnList'],
+                              labelList:
+                                  (item['label'] as List?)?.cast<dynamic>() ?? const [],
+                              labelEnList:
+                                  (item['labelEn'] as List?)?.cast<dynamic>() ?? const [],
                               type: item['type'],
                               day: item['day'],
                               weight: item['weight'],
@@ -233,7 +234,7 @@ class _RecipePageState extends State<RecipePage>
                     const Color.fromARGB(255, 255, 225, 225).withOpacity(0.6),
                     const Color.fromARGB(255, 255, 225, 225).withOpacity(0.0),
                   ],
-                  stops: [0.0, 0.25, 0.5, 1.0],
+                  stops: const [0.0, 0.25, 0.5, 1.0],
                 ),
               ),
             ),
@@ -269,7 +270,7 @@ Widget buildCard({
   String displayDay = '$day ${'DAY'.tr}';
   String displayHot = '$hot ${'HOT_UNIT'.tr}';
   return GestureDetector(
-    onTap: () => Get.to(() => RecipeDetail(), arguments: {
+    onTap: () => Get.to(() => const RecipeDetail(), arguments: {
       'id': id,
       'name': displayName,
       'imageUrl': imageUrl,

@@ -1,6 +1,5 @@
 import 'dart:io';
 import 'dart:math';
-import 'dart:ui';
 import 'package:calorie/common/icon/index.dart';
 import 'package:calorie/common/util/constants.dart';
 import 'package:calorie/components/dialog/delete.dart';
@@ -27,11 +26,13 @@ class _HomeState extends State<Home>
   int currentDay = DateTime.now().weekday % 7;
   DateTime now = DateTime.now();
   DateTime currentDate = DateTime.now();
-  dynamic dailyData = {'fat': 0, 'carbs': 0, 'calories': 0, 'protein': 0};
+  dynamic dailyData = {'fats': 0, 'carbs': 0, 'calories': 0, 'protein': 0,'sugar': 0, 'fiber': 0};
   List record = [];
   late Worker _homeDataWorker;
-  late Worker? _userReadyWorker = null;
+  Worker? _userReadyWorker;
+  Worker? _analyzingWorker;
   bool _showMonthPicker = false;
+  bool _isLoadingRecords = false; // 日记录请求加载状态
   late AnimationController _animationController;
   late Animation<double> _animation;
   DateTime _displayMonth = DateTime.now(); // 月份选择器当前显示的月份
@@ -57,6 +58,19 @@ class _HomeState extends State<Home>
 
   // 统一将 DateTime 转为 yyyy-MM-dd 字符串（零补齐）
   String _toYmd(DateTime d) => DateFormat('yyyy-MM-dd').format(d);
+
+  // 计算热量占比，空值或非法值时返回 0，避免空指针/除零
+  double _calcCaloriePercent() {
+    final num calories =
+        dailyData['calories'] is num ? dailyData['calories'] as num : 0;
+    final num target = Controller.c.user['dailyCalories'] is num
+        ? Controller.c.user['dailyCalories'] as num
+        : 0;
+    if (target <= 0) return 0;
+    final double ratio = calories / target;
+    // clamp to 0-1 for percent indicator
+    return ratio.clamp(0, 1).toDouble();
+  }
 
   void _onRecordHorizontalDragStart(int itemId, DragStartDetails details) {
     setState(() {
@@ -221,6 +235,16 @@ class _HomeState extends State<Home>
         Controller.c.refreshHomeDataTrigger.value = false;
       }
     });
+
+    // 当分析状态从 true 切换为 false 时，立即刷新当日记录，避免短暂出现“无记录”引导卡片
+    _analyzingWorker = ever<bool>(Controller.c.isAnalyzing, (bool analyzing) {
+      if (!analyzing && mounted) {
+        setState(() {
+          _isLoadingRecords = true;
+        });
+        fetchData(currentDate);
+      }
+    });
   }
 
   // 拉取某个月份的记录分布
@@ -277,25 +301,38 @@ class _HomeState extends State<Home>
     // 若用户ID未就绪，直接返回，不请求
     final int? userId = _getUserIdSafe();
     if (userId == null) return;
+    if (mounted) {
+      setState(() {
+        _isLoadingRecords = true;
+      });
+    }
     try {
-      final res =
-          await dailyRecord(userId, DateFormat('yyyy-MM-dd').format(date));
-      final records = await detectionList(1, 18,
+      await userSummaryResult(DateFormat('yyyy-MM-dd').format(date));
+
+      final dailyRes =
+          await dailyRecordResult(userId, DateFormat('yyyy-MM-dd').format(date));
+      final recordsRes = await detectionListResult(1, 18,
           date: DateFormat('yyyy-MM-dd').format(date));
 
       if (!mounted) return;
-      if (res != "-1") {
+      if (dailyRes.ok && dailyRes.data != null) {
         setState(() {
-          dailyData = res;
+          dailyData = dailyRes.data;
         });
       }
-      if (records.isNotEmpty) {
+      if (recordsRes.ok) {
         setState(() {
-          record = records['content'];
+          record = recordsRes.data?['content'] ?? [];
         });
       }
     } catch (e) {
       print('$e error');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoadingRecords = false;
+        });
+      }
     }
 
     // final dayList = await detectionList();
@@ -319,6 +356,7 @@ class _HomeState extends State<Home>
     _homeDataWorker.dispose(); // ✅ 取消监听，防止页面销毁后还触发回调
     try {
       _userReadyWorker?.dispose();
+      _analyzingWorker?.dispose();
     } catch (_) {}
     _animationController.dispose(); // 释放动画控制器
     // 移除观察者
@@ -404,7 +442,7 @@ class _HomeState extends State<Home>
                       const Color.fromARGB(255, 171, 199, 255).withOpacity(0.9),
                       const Color.fromARGB(255, 171, 199, 255).withOpacity(0.0),
                     ],
-                    stops: [0.0, 0.5, 0.75, 1.0],
+                    stops: const [0.0, 0.5, 0.75, 1.0],
                   ),
                 ),
               ),
@@ -427,7 +465,7 @@ class _HomeState extends State<Home>
                       Colors.white.withOpacity(0.6),
                       Colors.white.withOpacity(0.0),
                     ],
-                    stops: [0.0, 0.5, 0.75, 1.0],
+                    stops: const [0.0, 0.5, 0.75, 1.0],
                   ),
                 ),
               ),
@@ -894,8 +932,7 @@ class _HomeState extends State<Home>
       radius: 100.0,
       lineWidth: 15.0,
       animation: true,
-      percent:
-          min(1, dailyData['calories'] / Controller.c.user['dailyCalories']),
+      percent: _calcCaloriePercent(),
       center: Container(
         margin: const EdgeInsets.all(20),
         decoration: BoxDecoration(
@@ -959,7 +996,7 @@ class _HomeState extends State<Home>
               const Color.fromARGB(255, 95, 154, 255)),
           _buildNutrientCard(
               Controller.c.user['dailyFats'],
-              dailyData['fat'],
+              dailyData['fats'],
               'FAT'.tr,
               AliIcon.meat2,
               const Color.fromARGB(255, 255, 122, 122)),
@@ -1028,8 +1065,7 @@ class _HomeState extends State<Home>
 
   Widget _buildAnalyzingTask() {
     return Obx(() {
-      if (!Controller.c.isAnalyzing.value ||
-          Controller.c.analyzingFilePath.value == '') {
+      if (!Controller.c.isAnalyzing.value) {
         return const SizedBox.shrink();
       }
 
@@ -1046,15 +1082,28 @@ class _HomeState extends State<Home>
               child: Stack(
                 alignment: Alignment.center,
                 children: [
-                  Container(
+                  SizedBox(
                     width: 90,
                     height: 90,
-                    child: Obx(() => Image.file(
-                          File(Controller.c.analyzingFilePath.value),
-                          fit: BoxFit.cover,
-                          color: const Color.fromARGB(60, 0, 0, 0), // 👈 半透明灰色
-                          colorBlendMode: BlendMode.darken,
-                        )),
+                    child: Obx(() {
+                      final path = Controller.c.analyzingFilePath.value;
+                      if (path.isEmpty) {
+                        return Container(
+                          color: const Color.fromARGB(255, 228, 232, 255),
+                          child: const Icon(
+                            AliIcon.camera,
+                            size: 38,
+                            color: Color.fromARGB(255, 120, 134, 200),
+                          ),
+                        );
+                      }
+                      return Image.file(
+                        File(path),
+                        fit: BoxFit.cover,
+                        color: const Color.fromARGB(60, 0, 0, 0), // 👈 半透明灰色
+                        colorBlendMode: BlendMode.darken,
+                      );
+                    }),
                   ),
                   Obx(() {
                     final progress = Controller.c.analyzingProgress.value;
@@ -1370,98 +1419,124 @@ class _HomeState extends State<Home>
 
   // 记录列表
   Widget _buildRecordList() {
-    if (record.isEmpty && !Controller.c.isAnalyzing.value) {
-      // 判断选择的日期是否为今天
-      bool isToday = _isSameDay(currentDate, DateTime.now());
+    return Obx(() {
+      final isAnalyzing = Controller.c.isAnalyzing.value;
+      // 优先展示加载中的动画
+      if (_isLoadingRecords) {
+        return Container(
+          margin: const EdgeInsets.only(top: 20, bottom: 40),
+          alignment: Alignment.center,
+          child: const LottieFood(
+            size: 40,
+            spacing: 12,
+          ),
+        );
+      }
 
-      return Container(
-        margin: const EdgeInsets.only(top: 10),
-        child: Column(
-          children: [
-            Container(
-                margin: const EdgeInsets.only(bottom: 15),
-                decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(10),
-                    color: const Color.fromARGB(255, 247, 249, 255)),
-                child: Row(
-                  children: [
-                    const ImageSwitcher(),
-                    Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 5),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                const Icon(AliIcon.calorie,
-                                    size: 20,
-                                    color: Color.fromARGB(255, 0, 0, 0)),
-                                const SizedBox(
-                                  width: 4,
-                                ),
-                                Text(
-                                  isToday
-                                      ? 'UPLOAD_YOUR_FOOD'.tr
-                                      : 'NO_RECORDS_PAST_DATE'.tr,
-                                  style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 16),
-                                ),
-                              ],
-                            ),
-                            if (isToday) ...[
-                              const SizedBox(
-                                height: 8,
-                              ),
+      if (record.isEmpty && !isAnalyzing) {
+        // 判断选择的日期是否为今天
+        bool isToday = _isSameDay(currentDate, DateTime.now());
+
+        return Container(
+          margin: const EdgeInsets.only(top: 10),
+          child: Column(
+            children: [
+              Container(
+                  margin: const EdgeInsets.only(bottom: 15),
+                  decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(10),
+                      color: const Color.fromARGB(255, 247, 249, 255)),
+                  child: Row(
+                    children: [
+                      const ImageSwitcher(),
+                      Expanded(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 5),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  Text(
-                                    "CLICK".tr,
-                                    style: const TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.bold,
-                                    ),
+                                  const Icon(
+                                    AliIcon.calorie,
+                                    size: 20,
+                                    color: Color.fromARGB(255, 0, 0, 0),
                                   ),
-                                  const SizedBox(
-                                    width: 4,
-                                  ),
-                                  const Icon(AliIcon.camera),
-                                  const SizedBox(
-                                    width: 4,
-                                  ),
-                                  Text(
-                                    "BUTTON".tr,
-                                    style: const TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.bold,
+                                  const SizedBox(width: 4),
+                                  Flexible(
+                                    child: Text(
+                                      isToday
+                                          ? 'UPLOAD_YOUR_FOOD'.tr
+                                          : 'NO_RECORDS_PAST_DATE'.tr,
+                                      textAlign: TextAlign.center,
+                                      softWrap: true,
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16,
+                                      ),
                                     ),
                                   ),
                                 ],
                               ),
+                              if (isToday) ...[
+                                const SizedBox(
+                                  height: 8,
+                                ),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Text(
+                                      "CLICK".tr,
+                                      style: const TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    const SizedBox(
+                                      width: 4,
+                                    ),
+                                    Text(
+                                      "+".tr,
+                                      style: const TextStyle(
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    const SizedBox(
+                                      width: 4,
+                                    ),
+                                    Text(
+                                      "BUTTON".tr,
+                                      style: const TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
                             ],
-                          ],
+                          ),
                         ),
                       ),
-                    ),
-                  ],
-                )),
-            const SizedBox(
-              height: 50,
-            ),
-          ],
-        ),
-      );
-    } else {
-      return Container(
-        margin: const EdgeInsets.only(top: 10),
-        padding: const EdgeInsets.only(bottom: 30),
-        child: Column(
-          children: record.map(_buildRecordListItem).toList(),
-        ),
-      );
-    }
+                    ],
+                  )),
+              const SizedBox(
+                height: 50,
+              ),
+            ],
+          ),
+        );
+      } else {
+        return Container(
+          margin: const EdgeInsets.only(top: 10),
+          padding: const EdgeInsets.only(bottom: 30),
+          child: Column(
+            children: record.map(_buildRecordListItem).toList(),
+          ),
+        );
+      }
+    });
   }
 }

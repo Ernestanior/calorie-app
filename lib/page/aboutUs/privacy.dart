@@ -18,15 +18,15 @@ class _PrivacyState extends State<Privacy> {
       backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
-        title: Text('PRIVACY_POLICY'.tr,style: TextStyle(fontWeight: FontWeight.bold,fontSize: 18),),
+        title: Text('PRIVACY_POLICY'.tr,style: const TextStyle(fontWeight: FontWeight.bold,fontSize: 18),),
       ),
       body: Container(
-        padding: EdgeInsets.symmetric(horizontal: 20),
+        padding: const EdgeInsets.symmetric(horizontal: 20),
         child:  SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('PRIVACY_UPDATE_TIME'.tr,style: TextStyle(fontSize: 12),),
+              Text('PRIVACY_UPDATE_TIME'.tr,style: const TextStyle(fontSize: 12),),
               const SizedBox(height: 10,),
               Text('PRIVACY_DESC_1'.tr,style: titleStyle),
               const SizedBox(height: 5,),

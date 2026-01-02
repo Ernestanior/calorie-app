@@ -35,7 +35,6 @@ class _WeightSheetState extends State<WeightSheet> {
 
   @override
   Widget build(BuildContext context) {
-    print('currentWeight ${(currentWeight - 30) * 5}');
     return Container(
       decoration: const BoxDecoration(
           borderRadius: BorderRadius.all(Radius.circular(10)),
@@ -72,7 +71,7 @@ class _WeightSheetState extends State<WeightSheet> {
                   ),
                   Text(
                     Controller.c.user['unitType'] == 0 ? 'kg' : 'lbs',
-                    style: TextStyle(
+                    style: const TextStyle(
                         color: Colors.black,
                         fontWeight: FontWeight.w500,
                         fontSize: 18),

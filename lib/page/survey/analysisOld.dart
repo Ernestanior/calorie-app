@@ -119,7 +119,7 @@ class _SurveyAnalysisState extends State<SurveyAnalysis>
     final dio = Dio();
     try {
       final response = await dio.request(
-        '${baseUrl}/openAI/create-reasoner',
+        '$baseUrl/openAI/create-reasoner',
         data: jsonEncode(data),
         options: Options(
           method: 'PUT',
@@ -147,7 +147,7 @@ class _SurveyAnalysisState extends State<SurveyAnalysis>
             }
           }
       }, onDone: () {
-        addNewText('\n\n' + "PERSONALIZED_PLAN_IS_READY".tr);
+        addNewText('\n\n${"PERSONALIZED_PLAN_IS_READY".tr}');
         _jumpTo100();
       }, onError: (error) {
         if (CancelToken.isCancel(error)) {
@@ -211,11 +211,11 @@ class _SurveyAnalysisState extends State<SurveyAnalysis>
   }
 
   void _autoScrollToBottom() {
-    Future.delayed(Duration(milliseconds: 100), () {
+    Future.delayed(const Duration(milliseconds: 100), () {
       if (_scrollController.hasClients) {
         _scrollController.animateTo(
           _scrollController.position.maxScrollExtent,
-          duration: Duration(milliseconds: 300),
+          duration: const Duration(milliseconds: 300),
           curve: Curves.easeOut,
         );
       }
@@ -224,15 +224,15 @@ class _SurveyAnalysisState extends State<SurveyAnalysis>
 
   void startAnimations() async {
     _LottieController1.repeat();
-    await Future.delayed(Duration(milliseconds: 400));
+    await Future.delayed(const Duration(milliseconds: 400));
     _LottieController2.repeat();
-    await Future.delayed(Duration(milliseconds: 400));
+    await Future.delayed(const Duration(milliseconds: 400));
     _LottieController3.repeat();
   }
 
   void _startSlowProgress() async {
     while (progress < 0.8 && !isFastForward) {
-      await Future.delayed(Duration(milliseconds: 200));
+      await Future.delayed(const Duration(milliseconds: 200));
       if (isDisposed) return;
       setState(() {
         progress += 0.02;

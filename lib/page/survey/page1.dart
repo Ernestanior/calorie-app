@@ -25,10 +25,10 @@ class _SurveyPage1State extends State<SurveyPage1> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SizedBox(height: 40),
+          const SizedBox(height: 40),
           Text('YOUR_GENDER'.tr,
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-          SizedBox(height: 100),
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 100),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: optionList.map((option) => 
@@ -39,9 +39,9 @@ class _SurveyPage1State extends State<SurveyPage1> {
               child: Column(
                 children: [
                   Container(
-                    padding: EdgeInsets.all(5),
+                    padding: const EdgeInsets.all(5),
                     decoration: BoxDecoration(
-                      border: Border.all(width: 2, color: widget.gender==option['value']?option['color']:Color.fromARGB(0, 255, 255, 255)),
+                      border: Border.all(width: 2, color: widget.gender==option['value']?option['color']:const Color.fromARGB(0, 255, 255, 255)),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: 
@@ -50,8 +50,8 @@ class _SurveyPage1State extends State<SurveyPage1> {
                           child: Image.asset(option['image'],width: 120,),
                         ),
                     ),
-                  SizedBox(height: 5,),
-                  Text(option['title'],style: TextStyle(fontSize: 14,fontWeight: FontWeight.bold),)
+                  const SizedBox(height: 5,),
+                  Text(option['title'],style: const TextStyle(fontSize: 14,fontWeight: FontWeight.bold),)
                 ],
               )),
             )

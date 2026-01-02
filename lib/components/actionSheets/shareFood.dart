@@ -89,7 +89,7 @@ class _ShareFoodSheetState extends State<ShareFoodSheet>  {
         RepaintBoundary(
             key: shareFoodKey,
             child:Container(
-              decoration: BoxDecoration(color: Color.fromARGB(255, 250, 249, 255)),
+              decoration: const BoxDecoration(color: Color.fromARGB(255, 250, 249, 255)),
               child:   Column(
               children: [
                 const SizedBox(height: 20),
@@ -225,7 +225,7 @@ class _ShareFoodSheetState extends State<ShareFoodSheet>  {
                     ],
                   ),
                 ),
-                SizedBox(
+                const SizedBox(
                   height: 25,
                 ),
               ],
@@ -257,7 +257,7 @@ class _ShareFoodSheetState extends State<ShareFoodSheet>  {
                           'assets/image/facebook.png',
                           width: 47,
                         ),
-                        SizedBox(height: 3,),
+                        const SizedBox(height: 3,),
                         const Text("Facebook", style: TextStyle(fontSize: 12)),
                       ],
                     ) ,

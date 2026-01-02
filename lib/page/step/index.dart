@@ -210,13 +210,13 @@ Widget todayStep(int todaySteps, int targetSteps, Function fetchData) {
                       style: const TextStyle(fontSize: 16, color: Colors.grey)),
                   Text("STEPS".tr,
                       style: const TextStyle(fontSize: 14, color: Colors.grey)),
-                      SizedBox(width: 5,),
+                      const SizedBox(width: 5,),
                       GestureDetector(
                   onTap: () => Get.bottomSheet(StepsSheet(
                       steps: targetSteps, onChange: (step) => fetchData(step))),
-                  child:Icon(
+                  child:const Icon(
                             AliIcon.edit4,
-                            color: const ui.Color.fromARGB(255, 0, 0, 0),
+                            color: ui.Color.fromARGB(255, 0, 0, 0),
                             size: 20,
                           ))
                 ]),
@@ -233,7 +233,7 @@ Widget todayStep(int todaySteps, int targetSteps, Function fetchData) {
                   Text("${calKcal(targetSteps)} ",
                       style: const TextStyle(fontSize: 14, color: Colors.grey)),
 
-                      SizedBox(width: 5,),
+                      const SizedBox(width: 5,),
                       Text("BURNED_CALORIE".tr,
                       style: const TextStyle(fontSize: 14, color: Colors.grey)),
                 ]),

@@ -221,6 +221,18 @@ Map<String, String> zh_CN = {
   'FUEL_MY_JOURNEY':'开启能量之旅',
   'VALID_UNTIL':'有效期至', 
 
+  // 浮动按钮菜单
+  'FAB_CAMERA':'拍照',
+  'FAB_GALLERY':'相册',
+  'FAB_MANUAL':'手动输入',
+  'FAB_MANUAL_TITLE':'手动记录',
+  'FAB_MANUAL_DESC':'描述你吃了什么，我们来帮你分析。',
+  'FAB_MANUAL_PLACEHOLDER':'例如：鸡肉沙拉，加橄榄油酱汁',
+  'FAB_MANUAL_SUBMIT':'提交',
+  'FAB_MANUAL_SUCCESS':'已提交，我们会尽快分析。',
+  'FAB_MANUAL_ERROR':'提交失败，请稍后重试。',
+  'GIF_NOT_SUPPORTED':'暂不支持 GIF，请选择 JPG/PNG 图片',
+
   //营养成分
   'NUTRITIONAL_VALUE':'营养成分',
   'MAIN_BENEFITS':'主要作用',

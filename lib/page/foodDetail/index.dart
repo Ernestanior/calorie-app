@@ -11,7 +11,6 @@ import 'package:calorie/store/store.dart';
 import 'package:calorie/components/dialog/delete.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:get/get_utils/src/extensions/internacionalization.dart';
 import 'package:google_fonts/google_fonts.dart';
 // import 'package:sliding_up_panel/sliding_up_panel.dart';
 
@@ -122,7 +121,7 @@ class _FoodDetailState extends State<FoodDetail> {
     } else {
       displayHeight = screenHeight * 0.6; // 默认占 60%
     }
-    Widget _buildMealHeader() {
+    Widget buildMealHeader() {
       final meal = mealInfoMap[_selectedMeal];
       return Row(
         children: [
@@ -187,7 +186,7 @@ class _FoodDetailState extends State<FoodDetail> {
       );
     }
 
-    Widget _buildPanelContent(ScrollController controller) {
+    Widget buildPanelContent(ScrollController controller) {
       return Container(
           decoration: const BoxDecoration(
               color: Colors.white,
@@ -202,7 +201,7 @@ class _FoodDetailState extends State<FoodDetail> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildMealHeader(),
+                buildMealHeader(),
                 const SizedBox(
                   height: 5,
                 ),
@@ -284,10 +283,10 @@ class _FoodDetailState extends State<FoodDetail> {
                     child:  Container(
                       padding: const EdgeInsets.all(5),
                       decoration: BoxDecoration(
-                      color: Color.fromARGB(148, 82, 82, 82),
+                      color: const Color.fromARGB(148, 82, 82, 82),
                       borderRadius: BorderRadius.circular(50),
                       ),
-                      child: Icon(
+                      child: const Icon(
                         AliIcon.left,
                         color: Colors.white,
                         size: 23,
@@ -301,15 +300,15 @@ class _FoodDetailState extends State<FoodDetail> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     GestureDetector(
-                      onTap: () => Get.bottomSheet(ShareFoodSheet(),
+                      onTap: () => Get.bottomSheet(const ShareFoodSheet(),
                           isScrollControlled: true),
                       child: Container(
                         padding: const EdgeInsets.all(5),
                         decoration: BoxDecoration(
-                          color: Color.fromARGB(147, 63, 63, 63),
+                          color: const Color.fromARGB(147, 63, 63, 63),
                           borderRadius: BorderRadius.circular(50),
                         ),
-                        child: Icon(
+                        child: const Icon(
                           AliIcon.share,
                           color: Colors.white,
                           size: 23,
@@ -322,10 +321,10 @@ class _FoodDetailState extends State<FoodDetail> {
                       child: Container(
                         padding: const EdgeInsets.all(5),
                         decoration: BoxDecoration(
-                          color: Color.fromARGB(147, 63, 63, 63),
+                          color: const Color.fromARGB(147, 63, 63, 63),
                           borderRadius: BorderRadius.circular(50),
                         ),
-                        child: Icon(
+                        child: const Icon(
                           Icons.delete_outline,
                           color: Colors.white,
                           size: 23,
@@ -343,17 +342,24 @@ class _FoodDetailState extends State<FoodDetail> {
               //   panelBuilder: (ScrollController sc) => _buildPanelContent(sc),
               //   body: const SizedBox(), // 可忽略
               // ),
-              DraggableScrollableSheet(
-                initialChildSize: 0.53,
-                minChildSize: max(
-                    double.parse(((screenHeight - displayHeight) / screenHeight)
-                        .toStringAsFixed(2)),
-                    0.1),
-                maxChildSize: 0.85,
-                builder: (context, controller) {
-                  return _buildPanelContent(controller);
-                },
-              )
+              // 计算面板初始/最小高度，确保符合约束
+              Builder(builder: (context) {
+                final rawMin = double.parse(
+                  (((screenHeight - displayHeight) / screenHeight).toStringAsFixed(2)),
+                );
+                final minChildSize = max(rawMin, 0.1);
+                const maxChildSize = 0.85;
+                final initialChildSize = min(maxChildSize, max(0.53, minChildSize));
+
+                return DraggableScrollableSheet(
+                  initialChildSize: initialChildSize,
+                  minChildSize: min(minChildSize, initialChildSize),
+                  maxChildSize: maxChildSize,
+                  builder: (context, controller) {
+                    return buildPanelContent(controller);
+                  },
+                );
+              })
             ],
           ),
         ));
@@ -475,7 +481,7 @@ class _FoodDetailState extends State<FoodDetail> {
                     value != null ? value.toString() : '0',
                     style: const TextStyle(fontWeight: FontWeight.bold)),
                 Text(' $unit',
-                    style: TextStyle(
+                    style: const TextStyle(
                         fontSize: 12, color: Color.fromARGB(255, 90, 90, 90))),
               ],
             )
@@ -682,7 +688,7 @@ class _FoodDetailState extends State<FoodDetail> {
   }
 
   void _showEditDishNameModal(BuildContext context) {
-    final TextEditingController _controller = TextEditingController(
+    final TextEditingController controller = TextEditingController(
       text: _dishName,
     );
 
@@ -706,13 +712,15 @@ class _FoodDetailState extends State<FoodDetail> {
             children: [
               TextField(
                 maxLength: 45,
-                controller: _controller,
+                controller: controller,
                 autofocus: true,
                 textInputAction: TextInputAction.done,
                 onSubmitted: (value) async {
                   final newName = value.trim();
                   if (newName.isNotEmpty) {
-                    _dishName = newName;
+                    setState(() {
+                      _dishName = newName;
+                    });
                   }
 
                   Navigator.pop(context); // 关闭 bottom sheet

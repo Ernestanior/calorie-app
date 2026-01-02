@@ -26,7 +26,7 @@ class _PlanButtonState extends State<PlanButton> {
   void initState() {
     super.initState();
     // 每500毫秒改变一个点
-    _dotTimer = Timer.periodic(Duration(milliseconds: 2000), (timer) {
+    _dotTimer = Timer.periodic(const Duration(milliseconds: 2000), (timer) {
       setState(() {
         dotCount = (dotCount % 3) + 1;
         buttonText = 'CREATING_PLAN'.tr + '.' * dotCount;
@@ -34,7 +34,7 @@ class _PlanButtonState extends State<PlanButton> {
     });
 
     // 5秒后切换按钮状态
-    _endTimer = Timer(Duration(seconds: 5), () {
+    _endTimer = Timer(const Duration(seconds: 5), () {
       _dotTimer?.cancel();
       setState(() {
         isLoading = false;

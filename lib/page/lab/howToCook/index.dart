@@ -1,4 +1,3 @@
-import 'package:calorie/network/api.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -390,9 +389,9 @@ class _HowToCookPageState extends State<HowToCookPage> {
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      Text(
+                      const Text(
                         '制作教程',
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: Colors.white70,
                           fontSize: 14,
                         ),
@@ -483,7 +482,7 @@ class _HowToCookPageState extends State<HowToCookPage> {
                       ],
                     ),
                   );
-                }).toList(),
+                }),
               ],
             ),
           ),
@@ -593,9 +592,9 @@ class _HowToCookPageState extends State<HowToCookPage> {
     final recipe = {
       'name': dishName,
       'ingredients': [
-        '主料：${dishName}所需的主要食材',
+        '主料：$dishName所需的主要食材',
         '调料：盐、生抽、老抽、料酒、糖、葱、姜、蒜',
-        '配菜：根据${dishName}特点搭配的配菜',
+        '配菜：根据$dishName特点搭配的配菜',
       ],
       'steps': [
         {'description': '准备所有食材，清洗干净，切成适当大小'},

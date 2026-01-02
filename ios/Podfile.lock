@@ -44,13 +44,7 @@ PODS:
     - Flutter
   - fluttertoast (0.0.2):
     - Flutter
-  - fluwx (0.0.1):
-    - Flutter
-    - fluwx/pay (= 0.0.1)
-  - fluwx/pay (0.0.1):
-    - Flutter
-    - WechatOpenSDK-XCFramework (~> 2.0.5)
-  - health (13.1.1):
+  - health (13.1.3):
     - Flutter
   - image_gallery_saver (2.0.2):
     - Flutter
@@ -66,9 +60,9 @@ PODS:
     - FlutterMacOS
   - permission_handler_apple (9.3.0):
     - Flutter
-  - SDWebImage (5.21.2):
-    - SDWebImage/Core (= 5.21.2)
-  - SDWebImage/Core (5.21.2)
+  - SDWebImage (5.21.5):
+    - SDWebImage/Core (= 5.21.5)
+  - SDWebImage/Core (5.21.5)
   - share_plus (0.0.1):
     - Flutter
   - shared_preferences_foundation (0.0.1):
@@ -85,7 +79,6 @@ PODS:
   - video_player_avfoundation (0.0.1):
     - Flutter
     - FlutterMacOS
-  - WechatOpenSDK-XCFramework (2.0.5)
 
 DEPENDENCIES:
   - camera_avfoundation (from `.symlinks/plugins/camera_avfoundation/ios`)
@@ -95,7 +88,6 @@ DEPENDENCIES:
   - Flutter (from `Flutter`)
   - flutter_secure_storage (from `.symlinks/plugins/flutter_secure_storage/ios`)
   - fluttertoast (from `.symlinks/plugins/fluttertoast/ios`)
-  - fluwx (from `.symlinks/plugins/fluwx/ios`)
   - health (from `.symlinks/plugins/health/ios`)
   - image_gallery_saver (from `.symlinks/plugins/image_gallery_saver/ios`)
   - image_picker_ios (from `.symlinks/plugins/image_picker_ios/ios`)
@@ -116,7 +108,6 @@ SPEC REPOS:
     - DKPhotoGallery
     - SDWebImage
     - SwiftyGif
-    - WechatOpenSDK-XCFramework
 
 EXTERNAL SOURCES:
   camera_avfoundation:
@@ -133,8 +124,6 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/flutter_secure_storage/ios"
   fluttertoast:
     :path: ".symlinks/plugins/fluttertoast/ios"
-  fluwx:
-    :path: ".symlinks/plugins/fluwx/ios"
   health:
     :path: ".symlinks/plugins/health/ios"
   image_gallery_saver:
@@ -163,24 +152,23 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/video_player_avfoundation/darwin"
 
 SPEC CHECKSUMS:
-  camera_avfoundation: dd002b0330f4981e1bbcb46ae9b62829237459a4
+  camera_avfoundation: adb0207d868b2d873e895371d88448399ab78d87
   connectivity_plus: 2a701ffec2c0ae28a48cf7540e279787e77c447d
   device_info_plus: 97af1d7e84681a90d0693e63169a5d50e0839a0d
   DKImagePickerController: 946cec48c7873164274ecc4624d19e3da4c1ef3c
   DKPhotoGallery: b3834fecb755ee09a593d7c9e389d8b5d6deed60
   file_picker: b159e0c068aef54932bb15dc9fd1571818edaf49
-  Flutter: e0871f40cf51350855a761d2e70bf5af5b9b5de7
+  Flutter: cabc95a1d2626b1b06e7179b784ebcf0c0cde467
   flutter_secure_storage: d33dac7ae2ea08509be337e775f6b59f1ff45f12
   fluttertoast: 21eecd6935e7064cc1fcb733a4c5a428f3f24f0f
-  fluwx: 95a2274c23418c1098940bd00dcfe7c975bb0550
-  health: d215443242b260036fa91f91d8f3504c327a127f
+  health: f1207cccb625fc2e8af263b09c29661bde7b0b7e
   image_gallery_saver: cb43cc43141711190510e92c460eb1655cd343cb
   image_picker_ios: c560581cceedb403a6ff17f2f816d7fea1421fc1
   in_app_purchase_storekit: a1ce04056e23eecc666b086040239da7619cd783
   in_app_review: 436034b18594851a7328d7f1c2ed5ec235b79cfc
   path_provider_foundation: 2b6b4c569c0fb62ec74538f866245ac84301af46
   permission_handler_apple: 9878588469a2b0d0fc1e048d9f43605f92e6cec2
-  SDWebImage: 9f177d83116802728e122410fb25ad88f5c7608a
+  SDWebImage: e9c98383c7572d713c1a0d7dd2783b10599b9838
   share_plus: c3fef564749587fc939ef86ffb283ceac0baf9f5
   shared_preferences_foundation: fcdcbc04712aee1108ac7fda236f363274528f78
   social_share: 702a5e3842addd22db515aa9e1e00a4b80a0296d
@@ -188,7 +176,6 @@ SPEC CHECKSUMS:
   SwiftyGif: 706c60cf65fa2bc5ee0313beece843c8eb8194d4
   url_launcher_ios: 5334b05cef931de560670eeae103fd3e431ac3fe
   video_player_avfoundation: 7c6c11d8470e1675df7397027218274b6d2360b3
-  WechatOpenSDK-XCFramework: b072030c9eeee91dfff1856a7846f70f7b9a88ed
 
 PODFILE CHECKSUM: c1c78dbadcc4c31a5e2c14935052714a1861ed16
 

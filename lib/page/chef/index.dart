@@ -1,4 +1,3 @@
-import 'package:calorie/common/icon/index.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:get/get.dart';
@@ -158,9 +157,9 @@ class _ChefPageState extends State<ChefPage> {
           gradient: LinearGradient(
             begin: imageOnLeft ? Alignment.topRight : Alignment.topLeft,
             end: imageOnLeft ? Alignment.bottomLeft : Alignment.bottomRight,
-            colors: [
-              const Color(0xFFFFF9E8),
-              const Color(0xFFFFF4D4),
+            colors: const [
+              Color(0xFFFFF9E8),
+              Color(0xFFFFF4D4),
             ],
           ),
         ),

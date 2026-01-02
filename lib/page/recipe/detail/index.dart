@@ -8,9 +8,10 @@ import 'package:calorie/store/store.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:shimmer/shimmer.dart';
-import 'mealData.dart';
 
 class RecipeDetail extends StatefulWidget {
+  const RecipeDetail({super.key});
+
   @override
   _RecipeDetailState createState() => _RecipeDetailState();
 }
@@ -22,6 +23,9 @@ class _RecipeDetailState extends State<RecipeDetail> {
   Map recipes = initRecipes;
   Map recipeCovers = initRecipeSets;
 
+  // 从新接口 /recipe/plan 加载的完整计划数据
+  Map<String, dynamic>? _plan;
+
   int totalCalories = 0;
   int totalCarbs = 0;
   int totalFat = 0;
@@ -29,49 +33,118 @@ class _RecipeDetailState extends State<RecipeDetail> {
   @override
   void initState() {
     super.initState();
-    fetchData(recipeSet['id'], 1);
+    _loadPlan();
   }
 
-  Future<void> fetchData(int id, int day) async {
+  Future<void> _loadPlan() async {
     try {
-      final recipe = await recipePage(id, day);
-      // print(MealDataHelper.groupMealsByType(recipe['content']));
-      // print(MealDataHelper.groupMealsByType(recipeCover['content']));
-      final type1List =
-          recipe['content'].where((item) => item['type'] == 1).toList();
-      final type2List =
-          recipe['content'].where((item) => item['type'] == 2).toList();
-
-      //计算总卡路里，蛋白质，碳水，脂肪
-      setState(() {
-        totalCalories = type1List.fold(
-            0,
-            (sum, item) => sum +
-                (item['foodCaloriesPerUnit'] * item['quantity'] ?? 0) as int);
-        totalCarbs = type1List.fold(
-            0,
-            (sum, item) => sum +
-                (item['foodCarbsPerUnit'] * item['quantity'] ?? 0) as int);
-        totalFat = type1List.fold(
-            0,
-            (sum, item) =>
-                sum + (item['foodFatPerUnit'] * item['quantity'] ?? 0) as int);
-        totalProtein = type1List.fold(
-            0,
-            (sum, item) => sum +
-                (item['foodProteinPerUnit'] * item['quantity'] ?? 0) as int);
-      });
-
+      final data = await recipePlan(recipeSet['id']);
       if (!mounted) return;
-      if (recipe.isNotEmpty) {
-        setState(() {
-          recipes = MealDataHelper.groupMealsByType(type1List);
-          recipeCovers = MealDataHelper.groupMealsByType(type2List);
-        });
+      if (data != null && data != "-1") {
+        _plan = Map<String, dynamic>.from(data as Map);
+        _applyDay(1);
       }
     } catch (e) {
       print('$e error');
     }
+  }
+
+  void _applyDay(int day) {
+    if (_plan == null) return;
+    final days = (_plan!['days'] as List?) ?? [];
+
+    Map<String, dynamic>? dayEntry;
+    for (final d in days) {
+      if (d is Map && d['day'] == day) {
+        dayEntry = Map<String, dynamic>.from(d);
+        break;
+      }
+    }
+
+    if (dayEntry == null) {
+      setState(() {
+        selectedDay = day;
+        recipes = {};
+        recipeCovers = {};
+        totalCalories = 0;
+        totalCarbs = 0;
+        totalFat = 0;
+        totalProtein = 0;
+      });
+      return;
+    }
+
+    final meals = (dayEntry['meals'] as List?) ?? [];
+
+    final Map<int, List<Map<String, dynamic>>> newRecipes = {};
+    final Map<int, List<Map<String, dynamic>>> newCovers = {};
+
+    int calories = 0;
+    int carbs = 0;
+    int fat = 0;
+    int protein = 0;
+
+    for (final m in meals) {
+      if (m is! Map) continue;
+      final mealType = (m['mealType'] ?? 0) as int;
+      if (mealType == 0) continue;
+
+      final coverPhoto = m['coverPhoto'];
+      if (coverPhoto != null && coverPhoto is String && coverPhoto.isNotEmpty) {
+        newCovers[mealType] = [
+          {
+            'previewPhoto': coverPhoto,
+          }
+        ];
+      }
+
+      final items = (m['items'] as List?) ?? [];
+      final List<Map<String, dynamic>> mealItems = [];
+
+      for (final it in items) {
+        if (it is! Map) continue;
+        final quantity = (it['quantity'] ?? 1) as int;
+        final fn = (it['foodNutrition'] is Map)
+            ? Map<String, dynamic>.from(it['foodNutrition'] as Map)
+            : <String, dynamic>{};
+
+        final calsPerUnit = (fn['caloriesPerUnit'] ?? 0) as int;
+        final carbsPerUnit = (fn['carbsPerUnit'] ?? 0) as int;
+        final fatPerUnit = (fn['fatPerUnit'] ?? 0) as int;
+        final proteinPerUnit = (fn['proteinPerUnit'] ?? 0) as int;
+
+        calories += calsPerUnit * quantity;
+        carbs += carbsPerUnit * quantity;
+        fat += fatPerUnit * quantity;
+        protein += proteinPerUnit * quantity;
+
+        mealItems.add({
+          'foodName': fn['name'],
+          'foodNameEn': fn['nameEn'],
+          'foodUnit': fn['unit'],
+          'foodImageUrl': fn['imageUrl'] ?? '',
+          'foodCaloriesPerUnit': calsPerUnit,
+          'foodCarbsPerUnit': carbsPerUnit,
+          'foodFatPerUnit': fatPerUnit,
+          'foodProteinPerUnit': proteinPerUnit,
+          'quantity': quantity,
+        });
+      }
+
+      if (mealItems.isNotEmpty) {
+        newRecipes[mealType] = mealItems;
+      }
+    }
+
+    setState(() {
+      selectedDay = day;
+      recipes = newRecipes;
+      recipeCovers = newCovers;
+      totalCalories = calories;
+      totalCarbs = carbs;
+      totalFat = fat;
+      totalProtein = protein;
+    });
   }
 
   // double calculateOpacity(double shrinkOffset, double expandedHeight) {
@@ -344,8 +417,7 @@ class _RecipeDetailState extends State<RecipeDetail> {
           bool isSelected = selectedDay == day;
           return GestureDetector(
             onTap: () {
-              fetchData(recipeSet['id'], day);
-              setState(() => selectedDay = day);
+              _applyDay(day);
             },
             child: Container(
               margin: const EdgeInsets.symmetric(horizontal: 6),
@@ -378,7 +450,7 @@ class _RecipeDetailState extends State<RecipeDetail> {
       decoration: BoxDecoration(
         color: const Color.fromARGB(255, 249, 249, 255),
         borderRadius: BorderRadius.circular(15),
-        boxShadow: [const BoxShadow(color: Colors.black12, blurRadius: 10)],
+        boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 10)],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -387,7 +459,7 @@ class _RecipeDetailState extends State<RecipeDetail> {
             borderRadius: const BorderRadius.vertical(top: Radius.circular(10)),
             child: CachedNetworkImage(
               imageUrl:
-                  imgUrl + (recipeCovers[mealType]?[0]?['previewPhoto'] ?? ''),
+                  recipeCovers[mealType]?[0]?['previewPhoto'] ?? '',
               height: 180,
               width: double.infinity,
               fit: BoxFit.cover,
@@ -476,7 +548,7 @@ class _RecipeDetailState extends State<RecipeDetail> {
               ClipRRect(
                 borderRadius: const BorderRadius.all(Radius.circular(6)),
                 child: CachedNetworkImage(
-                  imageUrl: imgUrl + img,
+                  imageUrl:  img,
                   height: 70,
                   width: 70,
                   fit: BoxFit.cover,
@@ -501,12 +573,12 @@ class _RecipeDetailState extends State<RecipeDetail> {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Container(
+                  SizedBox(
                     width: 180,
                     child: Text(name, style: const TextStyle(fontSize: 14)),
                   ),
                   const SizedBox(height: 5),
-                  Text('${quantity} ${unit}',
+                  Text('$quantity $unit',
                       style: const TextStyle(
                           fontSize: 12,
                           color: Color.fromARGB(255, 95, 80, 112))),

@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import 'dart:ui';
 
 class CameraOverlay extends StatelessWidget {
+  const CameraOverlay({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -18,7 +19,7 @@ class CameraOverlay extends StatelessWidget {
           // 绘制辅助框
           Center(
             child: CustomPaint(
-              size: Size(250, 250), // 控制框的大小
+              size: const Size(250, 250), // 控制框的大小
               painter: OverlayPainter(),
             ),
           ),
@@ -28,7 +29,7 @@ class CameraOverlay extends StatelessWidget {
             top: MediaQuery.of(context).size.height * 0.3,
             left: 0,
             right: 0,
-            child: Text(
+            child: const Text(
               "确保食物在辅助框内",
               textAlign: TextAlign.center,
               style: TextStyle(color: Colors.white, fontSize: 16),

@@ -45,12 +45,12 @@ class StepCard extends StatelessWidget {
                 style:
                     const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
-              permission?Icon(AliIcon.right,size: 20,weight: 0.1,):Container(
-                padding: EdgeInsets.symmetric(vertical: 2,horizontal: 10),
+              permission?const Icon(AliIcon.right,size: 20,weight: 0.1,):Container(
+                padding: const EdgeInsets.symmetric(vertical: 2,horizontal: 10),
                                       decoration: BoxDecoration(
                           color: const Color.fromARGB(255, 255, 229, 210),
                           borderRadius: BorderRadius.circular(20)),
-                child: Text('PERMISSION_REQUIRE'.tr,style: TextStyle(fontSize: 11,fontWeight: FontWeight.bold,color: const Color.fromARGB(255, 253, 152, 20)),),)
+                child: Text('PERMISSION_REQUIRE'.tr,style: const TextStyle(fontSize: 11,fontWeight: FontWeight.bold,color: Color.fromARGB(255, 253, 152, 20)),),)
             ],
           ),
           const SizedBox(
@@ -83,12 +83,12 @@ class StepCard extends StatelessWidget {
                         height: 10,
                       ),
                       Text(
-                        '${todaySteps}',
+                        '$todaySteps',
                         style: const TextStyle(
                             fontWeight: FontWeight.bold, fontSize: 16),
                       ),
                       Text(
-                        '/${targetSteps} ${'STEPS'.tr}',
+                        '/$targetSteps ${'STEPS'.tr}',
                         style: const TextStyle(fontSize: 11, color: Colors.grey),
                       ),
                     ],
@@ -129,7 +129,7 @@ class StepCard extends StatelessWidget {
                       const SizedBox(
                         height: 5,
                       ),
-                      Icon(
+                      const Icon(
                 AliIcon.foot,
                 size: 40,
                 color: Color.fromARGB(255, 255, 176, 7),

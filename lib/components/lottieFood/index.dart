@@ -7,10 +7,10 @@ class LottieFood extends StatefulWidget {
   final double spacing;
 
   const LottieFood({
-    Key? key,
+    super.key,
     this.size = 25,
     this.spacing = 8,
-  }) : super(key: key);
+  });
 
   @override
   State<LottieFood> createState() => _LottieFoodState();
@@ -24,10 +24,10 @@ class _LottieFoodState extends State<LottieFood> with TickerProviderStateMixin {
   void startAnimations() async {
         if (!mounted) return;
     _LottieController1.repeat();
-    await Future.delayed(Duration(milliseconds: 400));
+    await Future.delayed(const Duration(milliseconds: 400));
     if (!mounted) return;
     _LottieController2.repeat();
-    await Future.delayed(Duration(milliseconds: 400));
+    await Future.delayed(const Duration(milliseconds: 400));
     if (!mounted) return;
     _LottieController3.repeat();
   }
@@ -52,7 +52,7 @@ class _LottieFoodState extends State<LottieFood> with TickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     return Row(
-      mainAxisAlignment: MainAxisAlignment.start,
+      mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Lottie.asset(
           'assets/image/rice.json',

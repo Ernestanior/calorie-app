@@ -406,7 +406,7 @@ class _AiCookingHistoryPageState extends State<AiCookingHistoryPage> {
                           bottomLeft: Radius.circular(16),
                         ),
                         child: Image.network(
-                          imageUrl.startsWith('http') ? imageUrl : '$imgUrl$imageUrl',
+                          imageUrl,
                           width: 120,
                           height: 120,
                           fit: BoxFit.cover,
@@ -424,9 +424,9 @@ class _AiCookingHistoryPageState extends State<AiCookingHistoryPage> {
                       Container(
                         width: 120,
                         height: 120,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF7F7FA),
-                          borderRadius: const BorderRadius.only(
+                        decoration: const BoxDecoration(
+                          color: Color(0xFFF7F7FA),
+                          borderRadius: BorderRadius.only(
                             topLeft: Radius.circular(16),
                             bottomLeft: Radius.circular(16),
                           ),
@@ -469,7 +469,7 @@ class _AiCookingHistoryPageState extends State<AiCookingHistoryPage> {
                                     child:Row(
                                        mainAxisSize: MainAxisSize.min,
                                       children: [
-                                        const Icon(Icons.restaurant, size: 12, color: const Color.fromARGB(255, 120, 208, 125)),
+                                        const Icon(Icons.restaurant, size: 12, color: Color.fromARGB(255, 120, 208, 125)),
                                         const SizedBox(width: 4),
 Text(
                                       cuisine,
@@ -507,7 +507,7 @@ Text(
                                 
                               ],
                             ),
-                            Spacer(),
+                            const Spacer(),
                             
                             // 创建时间
                             Text(
@@ -557,9 +557,9 @@ Text(
               // Content
               Expanded(
                 child: _isLoading && _historyList.isEmpty
-                    ? Center(
+                    ? const Center(
                         child: CircularProgressIndicator(
-                          valueColor: AlwaysStoppedAnimation<Color>(const Color(0xFFFF6B35)),
+                          valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFFF6B35)),
                         ),
                       )
                     : _error != null && _historyList.isEmpty
@@ -601,24 +601,52 @@ Text(
                         : _historyList.isEmpty
                             ? Center(
                                 child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    const Icon(Icons.history, size: 64, color: Colors.black38),
-                                    const SizedBox(height: 16),
+                                    const SizedBox(height: 150),
+                                    Image.asset(
+                                      'assets/image/rice.png',
+                                      height: 100,
+                                    ),
+                                    const SizedBox(height: 20),
                                     Text(
                                       'NO_HISTORY_RECORDS'.tr,
                                       style: GoogleFonts.inter(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.w700,
-                                        color: Colors.black87,
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w600,
+                                        color: const Color.fromARGB(255, 154, 148, 141),
                                       ),
+                                      textAlign: TextAlign.center,
                                     ),
                                     const SizedBox(height: 8),
                                     Text(
                                       'HISTORY_EMPTY_MESSAGE'.tr,
                                       style: GoogleFonts.inter(
                                         fontSize: 14,
-                                        color: Colors.black54,
+                                        color: const Color.fromARGB(255, 154, 148, 141),
+                                      ),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                    const SizedBox(height: 20),
+                                    GestureDetector(
+                                      onTap: () {
+                                        Navigator.pop(context);
+                                      },
+                                      child: Container(
+                                        width: 150,
+                                        padding: const EdgeInsets.symmetric(vertical: 8),
+                                        decoration: BoxDecoration(
+                                          color: const Color.fromARGB(255, 34, 32, 30),
+                                          borderRadius: BorderRadius.circular(20),
+                                        ),
+                                        child: Text(
+                                          'EXPLORE_RECIPES'.tr,
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 14,
+                                          ),
+                                          textAlign: TextAlign.center,
+                                        ),
                                       ),
                                     ),
                                   ],
